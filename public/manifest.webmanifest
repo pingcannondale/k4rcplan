@@ -1,0 +1,17 @@
+{
+  "name": "K4RC Training Plan",
+  "short_name": "K4RC",
+  "description": "ตารางซ้อมของนักกีฬา K4RC",
+  "lang": "th",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#202124",
+  "theme_color": "#202124",
+  "icons": [
+    { "src": "/icons/icon-192-v5.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512-v5.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512-v5.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

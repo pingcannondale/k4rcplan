@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="th" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>K4RC Training Plan</title>
+<meta name="theme-color" content="#202124">
+<meta name="application-name" content="K4RC Training Plan">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="K4RC Training Plan">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32-v5.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-v5.png">
+<link rel="preload" href="fonts/plus-jakarta-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/prompt-thai-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="kotcha.css">
+<link rel="stylesheet" href="athlete.css">
+<link rel="stylesheet" href="ios27.css">
+<link rel="stylesheet" href="k4rc-ui.css">
+<link rel="stylesheet" href="night.css">
+<link rel="stylesheet" href="refine.css">
+<link rel="stylesheet" href="refine2.css">
+<link rel="stylesheet" href="theme-mono.css">
+<link rel="stylesheet" href="layout-v2.css">
+<link rel="stylesheet" href="motion.css">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+<div id="splash" role="presentation"><img class="sp-logo" src="icons/k4rc-splash-logo.png" alt="K4RC" width="960" height="657"><div class="sp-bar"><i></i></div></div>
+<script>(function(){var s=document.getElementById("splash");try{if(sessionStorage.getItem("k4rc-splash")){s.remove();return}sessionStorage.setItem("k4rc-splash","1")}catch(e){}var tc=document.querySelector('meta[name="theme-color"]'),tv=tc&&tc.getAttribute("content");if(tc)tc.setAttribute("content","#ffffff");var d=function(){if(tc&&tv)tc.setAttribute("content",tv);s.classList.add("out");setTimeout(function(){s.remove()},600)};s.addEventListener("click",d);setTimeout(d,1900)})()</script>
+<div id="root" aria-live="polite"></div>
+<dialog id="dlg" aria-labelledby="dlg-title"></dialog>
+<script src="common.js"></script>
+<script src="steps.js"></script>
+<script src="perf.js"></script>
+<script src="motion.js"></script>
+<script>
+const demo = new URLSearchParams(location.search).has("demo");
+let token = store.get("rp_token"), me = "", plan = null, done = {}, skip = {}, paces = null, fb = {}, offline = false;
+let msgs = [], profile = null, feed = [], feedAv = {}, ptab = "prog", psel = 11;
+let tab = "home", wi = null, sel = null;
+document.documentElement.dataset.theme = "light"; store.del("rp_theme"); // ธีม iOS 27 (กระจกสว่าง) ใช้โหมดสว่างอย่างเดียว
+const root = document.getElementById("root"), dlg = document.getElementById("dlg");
+
+async function call(path, opts = {}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { "content-type": "application/json", ...(token ? { authorization: "Bearer " + token } : {}) },
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || "เกิดข้อผิดพลาด"), { status: r.status });
+  return data;
+}
+
+/* ---------- สมัครนักกีฬานอก (เป้าหมายตายตัว: Buriram Marathon 2027 ฮาล์ฟ 23 ม.ค. 2027) ---------- */
+function showReg(msg = "", v = {}) {
+  root.innerHTML = `<main class="login"><form class="login-card" id="rf" novalidate>
+    <button class="back" type="button" id="rb">‹ กลับ</button>
+    <i class="logo" role="img" aria-label="K4RC"></i>
+    <h1 class="sr">สมัครสมาชิก K4RC</h1>
+    <p class="muted center-tx">สมัครเพื่อรับตารางซ้อมฮาล์ฟมาราธอนที่ปรับตามเวลาของคุณ</p>
+    <div class="goal-box"><b>เป้าหมายการซ้อม</b>Buriram Marathon 2027 · Half-Marathon 21.1 กม.<br>วันแข่ง 23 มกราคม 2027</div>
+    <label class="l" for="rg-nick">ชื่อเล่น</label>
+    <input id="rg-nick" type="text" maxlength="30" autocomplete="nickname" required value="${esc(v.nickname || "")}">
+    <label class="l" for="rg-em">อีเมล</label>
+    <input id="rg-em" type="email" autocomplete="username" required value="${esc(v.email || "")}">
+    <label class="l" for="rg-pw">รหัสผ่าน</label>
+    <input id="rg-pw" type="password" autocomplete="new-password" minlength="8" required>
+    <p class="hint">อย่างน้อย 8 ตัวอักษร</p>
+    <label class="l" for="rg-pb">เวลาสถิติที่ดีที่สุดระยะ 5K (PB 5K)</label>
+    <input id="rg-pb" type="text" inputmode="numeric" autocomplete="off" placeholder="เช่น 25:30" maxlength="8" required value="${esc(v.pb5k || "")}">
+    <p class="hint">พิมพ์ตัวเลขล้วนได้ ระบบใส่ “:” ให้ เช่น 2530 = 25:30</p>
+    <p class="err" role="alert">${esc(msg)}</p>
+    <button class="btn primary block" type="submit">สมัครและรับตารางซ้อม</button>
+    <button class="swap" type="button" id="rl">มีบัญชีแล้ว? เข้าสู่ระบบ</button>
+  </form></main>`;
+  const pb = document.getElementById("rg-pb");
+  pb.oninput = () => { pb.value = maskTime(pb.value); };
+  document.getElementById("rb").onclick = () => showLogin();
+  document.getElementById("rl").onclick = () => showLogin();
+  document.getElementById("rf").onsubmit = async (e) => {
+    e.preventDefault();
+    const vals = { nickname: document.getElementById("rg-nick").value, email: document.getElementById("rg-em").value, pb5k: pb.value };
+    const btn = e.submitter; btn.disabled = true; btn.textContent = "กำลังสร้างตารางซ้อม…";
+    try {
+      const d = await call("/api/register", { method: "POST", body: JSON.stringify({ ...vals, password: document.getElementById("rg-pw").value }) });
+      token = d.token; store.set("rp_token", token);
+      showRegDone(d);
+    } catch (err) { showReg(err.message, vals); }
+  };
+}
+function showRegDone(d) {
+  root.innerHTML = `<main class="login"><div class="login-card reg-done">
+    <i class="logo" role="img" aria-label="K4RC"></i>
+    <h1 class="center-tx" style="font-size:1.25rem">ยินดีต้อนรับ ${esc(d.name)}</h1>
+    <p class="muted center-tx">สร้างตารางซ้อมให้เรียบร้อยแล้ว</p>
+    <dl>
+      <dt>เป้าหมาย</dt><dd>Buriram Marathon 2027 · Half</dd>
+      <dt>วันแข่ง</dt><dd>23 ม.ค. 2027</dd>
+      <dt>เวลาคาดการณ์</dt><dd>${esc(d.predictedHalf)}</dd>
+      <dt>เพซคาดการณ์</dt><dd>${esc(d.predictedPace)} /กม.</dd>
+      <dt>ตารางที่จับคู่</dt><dd>${esc(d.planLabel)}</dd>
+    </dl>
+    <button class="btn primary block" type="button" id="rd-go">เริ่มซ้อม</button>
+  </div></main>`;
+  document.getElementById("rd-go").onclick = () => load();
+}
+
+/* ---------- เข้าสู่ระบบ ---------- */
+function showLogin(msg = "") {
+  root.innerHTML = `<main class="lg"><div class="lg-stage">
+    <div class="lg-hero" role="img" aria-label="นักวิ่งตอนกลางคืน"></div>
+    <img class="lg-logo" src="icons/start-logo.png" alt="K4RC" width="368" height="252" decoding="async">
+    <section class="lg-sheet">
+      <h1>กลับมาวิ่งกันต่อ</h1>
+      <p class="lg-sub">เข้าสู่ระบบเพื่อดูแผนซ้อมของคุณ</p>
+      <form id="lf">
+        <label class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          <input id="em" type="email" autocomplete="username" placeholder="อีเมล" aria-label="อีเมล" required></label>
+        <label class="lg-field"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input id="pw" type="password" autocomplete="current-password" placeholder="รหัสผ่าน" aria-label="รหัสผ่าน" required>
+          <button class="lg-eye" type="button" id="eye" aria-label="แสดงรหัสผ่าน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></label>
+        <p class="lg-hint">ลืมรหัสผ่าน? ขอรหัสใหม่จากโค้ช</p>
+        <p class="lg-msg" role="alert">${esc(msg)}</p>
+        <button class="lg-go" type="submit">เข้าสู่ระบบ</button>
+      </form>
+      <p class="lg-signup">ยังไม่มีบัญชี?<button class="lg-link" type="button" id="lj">สร้างบัญชี</button></p>
+      ${installBtn("lg-install")}
+    </section></div></main>`;
+  document.getElementById("lj").onclick = () => showReg();
+  document.getElementById("eye").onclick = (e) => { const p = document.getElementById("pw"), s = p.type === "password"; p.type = s ? "text" : "password"; e.currentTarget.setAttribute("aria-label", s ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"); };
+  document.getElementById("lf").onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.submitter; btn.disabled = true; btn.textContent = "กำลังเข้าสู่ระบบ…";
+    try {
+      const d = await call("/api/login", { method: "POST", body: JSON.stringify({ email: document.getElementById("em").value, password: document.getElementById("pw").value }) });
+      token = d.token; store.set("rp_token", token);
+      await load();
+    } catch (err) { showLogin(err.message); }
+  };
+}
+function logout() { token = null; store.del("rp_token"); store.del("rp_cache"); plan = null; paces = null; fb = {}; skip = {}; wi = null; sel = null; tab = "home"; msgs = []; profile = null; feed = []; feedAv = {}; closeM(true); showLogin(); }
+
+async function load() {
+  root.innerHTML = `<p class="center muted">กำลังโหลด…</p>`;
+  try {
+    await flushQ(); // ส่งของที่ค้างตอนไม่มีเน็ตก่อน
+    if (!demo && token) window.__feedP = call(feedUrl()).catch(() => null); // ดึงฟีดพร้อมแผน ไม่รอกันทีละอย่าง
+    const d = await call("/api/plan");
+    me = d.name; plan = d.plan; done = d.done || {}; skip = d.skip || {}; paces = d.paces || null; fb = d.feedback || {}; offline = false; msgs = d.messages || []; profile = d.profile || null; qApply();
+    if (d.avatar && !store.get(avKey())) store.set(avKey(), d.avatar); else if (!d.avatar && store.get(avKey())) pushAvatar(store.get(avKey()));
+    store.set("rp_cache", JSON.stringify({ name: me, plan, done, skip, paces, fb, msgs, profile, at: Date.now() }));
+    render(); loadFeed(true);
+    flushQ(); // ตอนต้นฟังก์ชัน me ยังว่าง จึงอ่านคิว rp_q:<ชื่อ> ไม่เจอ ต้องส่งซ้ำตรงนี้หลังรู้ชื่อแล้ว
+  } catch (e) {
+    if (e.status === 401) { token = null; store.del("rp_token"); store.del("rp_cache"); showLogin("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"); }
+    else {
+      // ออฟไลน์/เน็ตหลุด: แสดงแผนที่เคยโหลดไว้ในเครื่อง (อ่านอย่างเดียว)
+      let c = null; try { c = JSON.parse(store.get("rp_cache") || "null"); } catch {}
+      if (c?.plan) { me = c.name; plan = c.plan; done = c.done || {}; skip = c.skip || {}; paces = c.paces || null; fb = c.fb || {}; msgs = c.msgs || []; profile = c.profile || null; offline = true; qApply(); render(); }
+      else root.innerHTML = `<p class="center">${esc(e.message)}</p>`;
+    }
+  }
+}
+
+/* ---------- ตัวอย่าง (/?demo=1) ---------- */
+function demoPlan() {
+  const start = addDays(mondayOf(todayStr()), -21);
+  const st = (t, u, x, p) => ({ t, u, x, p });
+  const iv = (n, wu, wx, wp, ru, rx, rp) => ({ t: "repeat", n, work: { u: wu, x: wx, p: wp }, rest: { u: ru, x: rx, p: rp } });
+  const T = [
+    [["run", "Easy + Strides", 0, "", [st("steady", "km", 6, "lt1")], 4], ["strength", "Strength 20 นาที", 20, "", null, 5, [{ n: "สควอทขาเดียว", s: 3, r: "8/ข้าง", w: "น้ำหนักตัว" }, { n: "RDL ขาเดียว", s: 3, r: "8/ข้าง", w: "" }, { n: "ยกส้นเท้า", s: 3, r: "15", w: "" }, { n: "แพลงก์", s: 3, r: "30 วินาที", w: "" }]]],
+    [["run", "Sub-threshold 4×6 นาที", 0, "ห้ามเร่งเกินเพซ LT2", [st("warmup", "km", 3, "e"), iv(4, "min", 6, "lt2", "min", 1, "e"), st("cooldown", "km", 2.5, "e")], 7]],
+    [["run", "Easy run", 0, "Aerobic ล้วน ห้ามเร่ง", [st("steady", "km", 7, "lt1")], 4]],
+    [["run", "Intervals 6×800 ม.", 0, "", [st("warmup", "km", 3, "e"), iv(6, "m", 800, "k5", "m", 400, "e"), st("cooldown", "km", 2, "e")], 8]],
+    [["rest", "พัก", 0, "พักเต็มวัน"]],
+    [["run", "Long run", 0, "พกเจล 1 ซอง ดื่มน้ำทุก 3 กม.", [st("steady", "km", 18, "lt1")], 6]],
+    [["run", "Recovery jog", 0, "เบามาก คุยได้ตลอด", [st("steady", "km", 5, "e")], 3]],
+  ];
+  // วันพักในตัวอย่างเลื่อนตามวันจริง (ไม่ให้ตรงกับ "วันนี้" เสมอ ไม่งั้นหน้าแรกไม่มีปุ่มทำเสร็จแล้วให้ลอง)
+  { const dow = (new Date(todayStr() + "T00:00:00Z").getUTCDay() + 6) % 7, rest = T.splice(4, 1)[0]; T.splice((dow + 3) % 7, 0, rest); }
+  const ph = ["Base", "Base", "Build", "Build", "Build", "Peak"], fc = ["สร้างฐาน aerobic", "เพิ่มโหลด", "เริ่ม sub-threshold", "ช่วงหนัก", "ฟื้นตัว", "ช่วงหนักสุด"];
+  const weeks = ph.map((phase, w) => {
+    const s = addDays(start, 7 * w);
+    return { weekNumber: w + 1, startDate: s, endDate: addDays(s, 6), phase, focus: fc[w], isRecoveryWeek: false,
+      days: T.map((list, i) => ({ date: addDays(s, i), workouts: list.map(([sport, name, m, h, steps, rpe, ex], j) => {
+        const x = { id: `d${w}${i}${j}`, sport, name, durationMinutes: m, distanceMeters: 0, humanReadable: h, description: "", primaryZone: "", rpe: rpe || 0, type: "" };
+        if (ex) x.exercises = ex;
+        if (steps) { x.steps = steps; const c = Steps.calc(steps, DEMO_PACES); x.durationMinutes = c.minutes; x.distanceMeters = c.meters; }
+        return x;
+      }) })) };
+  });
+  return { meta: { event: "ฮาล์ฟมาราธอน เป้า sub 1:30", eventDate: addDays(start, 7 * 14), planStartDate: start, planEndDate: addDays(start, 41) }, weeks };
+}
+// ตัวอย่างประวัติที่ทำแล้ว (วันที่ผ่านมา) เพื่อให้กราฟสถิติมีข้อมูล เว้น 2 เวิร์คเอาต์ให้เป็น "ไม่ได้ทำ"
+function seedDemo() {
+  const today = todayStr(); let skipped = 0;
+  plan.weeks.forEach((w) => w.days.forEach((d) => d.workouts.forEach((x) => {
+    if (x.sport === "rest" || d.date >= today) return;
+    if (x.name.startsWith("Intervals") && skipped < 2 && d.date < addDays(today, -7)) { if (!skipped) skip[x.id] = 1; skipped++; return; }
+    done[x.id] = 1;
+    fb[x.id] = { rpe: Math.max(1, (x.rpe || 5) + (x.id.length % 2 ? 0 : 1)), feel: 3 + (x.id.length % 3 === 0 ? 1 : 0), pain: false, note: x.name.startsWith("Long") ? "ช่วง 3 กม.สุดท้ายเหนื่อย แต่จบได้ดี" : "", at: d.date + "T10:00:00Z" };
+  })));
+}
+const DEMO_PACES = { values: { e: "6:31-7:31", lt1: "5:56-6:31", lt2: "4:57", marathon: "5:16", k5: "4:40", vo2max: "4:33", r: "4:18" }, note: "ตัวอย่าง: โค้ชจะเป็นคนกรอกเพซจริงให้", updatedAt: new Date().toISOString() };
+
+/* ---------- ตัวช่วยคำนวณ ---------- */
+const hasPaceVal = () => !!paces && PACES.some((p) => paces.values?.[p.k]);
+function wcalc(x) {
+  const c = x.steps?.length ? Steps.calc(x.steps, paces) : null;
+  const ok = !!c && c.ok;
+  return { c, min: ok ? c.minutes : +x.durationMinutes || 0, m: ok ? c.meters : +x.distanceMeters || 0 };
+}
+const trainOf = (d) => d.workouts.filter((x) => x.sport !== "rest");
+const dayKm = (d) => trainOf(d).reduce((s, x) => s + wcalc(x).m, 0) / 1000;
+function wkStats(w) {
+  const all = w.days.flatMap((d) => trainOf(d));
+  const dn = all.filter((x) => done[x.id]);
+  const km = (l) => l.reduce((s, x) => s + wcalc(x).m, 0) / 1000;
+  return { n: all.length, doneN: dn.length, planKm: km(all), doneKm: km(dn) };
+}
+const clockMin = (m) => (m >= 100 ? `${Math.floor(m / 60)}:${pad(m % 60)}` : `${m}`);
+const clockUnit = (m) => (m >= 100 ? "ชม." : "นาที");
+const num = (v, u) => `<div><span class="nv">${v}</span><span class="nu"> ${u}</span></div>`;
+
+/* ---------- วาดหน้า ---------- */
+/* ---------- สถานะ ไอคอน ตัวช่วย ---------- */
+const SVG = (d, w = 3.5) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const ICON = { done: SVG("M5 12.5l4.5 4.5L19 7.5"), missed: SVG("M6 6l12 12M18 6L6 18"), today: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/></svg>`, planned: "", rest: "" };
+let INDEX = {};
+const loadOf = (x) => Perf.workoutLoad(wcalc(x).min, fb[x.id]?.rpe || x.rpe);
+function findW(id) { for (const w of plan?.weeks || []) for (const d of w.days) for (const x of d.workouts) if (x.id === id) return x; return null; }
+function workoutBody(x) {
+  const on = !!done[x.id], { c, min, m } = wcalc(x);
+  const refs = c ? [...new Set(c.segs.filter((s) => s.ref && s.type !== "rest").map((s) => s.ref))] : [];
+  const chips = refs.map((r) => `<span class="cp">${Steps.REF_LABEL[r]}${paces?.values?.[r] ? " " + esc(paceText(paces.values[r])) : ""}</span>`)
+    .concat(!c && x.targetPace ? [`<span class="cp">${esc(x.targetPace.low)}${x.targetPace.high && x.targetPace.high !== x.targetPace.low ? "–" + esc(x.targetPace.high) : ""} /กม.</span>`] : [])
+    .concat(x.primaryZone ? [`<span class="cp mut">${esc(x.primaryZone)}</span>`] : []);
+  const miss = c?.missing?.map((r) => Steps.REF_LABEL[r]) || [];
+  return `<div class="nums">${m ? num(+(m/1000).toFixed(1), "กม.") : ""}${min ? num(clockMin(min), clockUnit(min)) : ""}${x.rpe ? num(x.rpe, "RPE แผน") : ""}</div>
+    ${c ? stepGraph(c.segs, "กราฟโครงสร้างการซ้อม") + stepRows(x.steps, paces) : ""}
+    ${miss.length ? `<p class="warn">โค้ชยังไม่ได้ตั้งเพซ ${esc(miss.join(", "))} ตัวเลขเวลาและกราฟยังไม่ครบ</p>` : ""}
+    ${x.exercises?.length ? `<div class="srows" role="list">${x.exercises.map((e) => `<div class="srow" role="listitem"><div><b>${esc(e.n)}</b>${e.w ? `<div class="sub">${esc(e.w)}</div>` : ""}</div><span class="sv">${esc(Steps.exAmount(e))}</span></div>`).join("")}</div>` : ""}
+    ${chips.length ? `<div class="chipsP">${chips.join("")}</div>` : ""}
+    ${x.description ? `<p class="wtx">${esc(x.description)}</p>` : ""}${x.humanReadable ? `<p class="wtx">${esc(x.humanReadable)}</p>` : ""}
+    ${on ? fbLine(fb[x.id]) : ""}`;
+}
+const fmtHM = (min) => `${Math.floor(min / 60)}:${pad(Math.round(min) % 60)}`;
+// รูปโปรไฟล์: เก็บในเครื่อง (ย่อเป็นสี่เหลี่ยมจัตุรัส 256px) ไม่ต้องอัปโหลดขึ้นเซิร์ฟเวอร์
+const avKey = () => "rp_avatar:" + me;
+function avatarBtn(cls = "", act = "avatar") {
+  const p = store.get(avKey());
+  return `<button type="button" class="avatar ${cls}${p ? " has-photo" : ""}" data-act="${act}"${act === "tab" ? ' data-v="me"' : ""} aria-label="${act === "tab" ? "โปรไฟล์" : p ? "เปลี่ยนรูปโปรไฟล์" : "เพิ่มรูปโปรไฟล์"}">${p ? `<img src="${p}" alt="">` : `${NAVI.me}<i class="av-plus">${SVG("M12 6v12M6 12h12", 3)}</i>`}</button>`;
+}
+// ส่งรูปโปรไฟล์ (ย่อ 144px) ขึ้นเซิร์ฟเวอร์ให้เพื่อนในทีมเห็นในฟีด ส่งค่าว่าง = ลบรูป
+async function pushAvatar(url, loud) {
+  if (demo || offline || !token) return;
+  try {
+    if (url) url = await squareThumb(await (await fetch(url)).blob(), 144, 0.8);
+    await call("/api/avatar", { method: "POST", body: JSON.stringify({ img: url || "" }) });
+    loadFeed(true);
+  } catch (e) { if (loud) alert("อัปโหลดรูปให้เพื่อนเห็นไม่สำเร็จ: " + (e.message || "ลองใหม่")); }
+}
+function squareThumb(file, n = 256, q = 0.85) {
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const m = Math.min(img.width, img.height), c = document.createElement("canvas"); c.width = c.height = n;
+      c.getContext("2d").drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, n, n);
+      URL.revokeObjectURL(u); res(c.toDataURL("image/jpeg", q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error("อ่านรูปไม่ได้")); };
+    img.src = u;
+  });
+}
+const avInput = Object.assign(document.createElement("input"), { type: "file", accept: "image/*", hidden: true });
+document.body.appendChild(avInput);
+avInput.addEventListener("change", async () => {
+  const f = avInput.files[0]; avInput.value = ""; if (!f) return;
+  try { const url = await squareThumb(f); store.set(avKey(), url); pushAvatar(url, true); render(); } catch { alert("ใช้รูปนี้ไม่ได้ ลองเลือกรูปอื่นนะครับ"); }
+});
+function initials(n) {
+  const w = String(n || "").trim().split(/\s+/).filter(Boolean); if (!w.length) return "?";
+  const g = (t) => Array.from(t)[0].toUpperCase();
+  return /^[A-Za-z]/.test(w[0]) && w[1] ? g(w[0]) + g(w[1]) : g(w[0]);
+}
+const SHG = { run: "M14 5.2a1.6 1.6 0 110 .01M13 8.5l-3.2 3 3 2.6-1.4 4.6M9.8 11.5L7 12M13 8.5l3 3 2.6.2M13.6 14.4l3.4 2.4", strength: "M6.5 9v6M17.5 9v6M9.5 7v10M14.5 7v10M9.5 12h5", race: "M8 18V6l9 3-9 3.5", rest: "M17.5 14A6 6 0 0110 6.5 6 6 0 1017.5 14z" };
+const shColor = (x) => ({ easy: "#2fd8ff", mid: "#ffa24a", hard: "#ff3b46", str: "#c68bff", rest: "#8b909a" })[x.sport === "rest" ? "rest" : x.sport === "strength" ? "str" : x.sport === "race" || x.rpe >= 7 ? "hard" : x.rpe && x.rpe <= 4 ? "easy" : "mid"];
+function shield(x, on) {
+  const C = shColor(x), id = "sh" + Math.random().toString(36).slice(2, 7);
+  return `<span class="shl" style="--c:${C}"><svg viewBox="0 0 24 27" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C}" stop-opacity=".34"/><stop offset="1" stop-color="${C}" stop-opacity=".07"/></linearGradient></defs><path d="M12 1.2l9.6 4.2v8c0 5.4-4 9.3-9.6 11C6.4 22.7 2.4 18.8 2.4 13.4v-8z" fill="url(#${id})" stroke="${C}" stroke-width="1.4" stroke-linejoin="round"/><path d="${SHG[x.sport] || SHG.run}" transform="translate(${x.sport === "run" || !SHG[x.sport] ? "-.8 1.6" : "0 1.5"})" fill="none" stroke="${C}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${on ? `<span class="chk">${SVG("M5 12.5l4.5 4.5L19 7.5", 4)}</span>` : ""}</span>`;
+}
+const NV = (b) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`;
+const NAVI = { home: NV('<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'), plan: NV('<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>'), cal: NV('<rect x="4" y="5.6" width="16" height="14.4" rx="3.5"/><path d="M4 10.4h16M8.6 3.4v4M15.4 3.4v4"/>'), stats: NV('<path d="M5 20v-7M12 20V5M19 20v-11"/>'), me: NV('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>') };
+const RPE_L = ["", "เบามาก", "เบา", "เบา", "พอดี", "พอดี", "ค่อนข้างหนัก", "หนัก", "หนักมาก", "หนักสุดๆ", "สุดกำลัง"];
+const FEEL_L = ["", "แย่มาก", "แย่", "ปกติ", "ดี", "ดีมาก"];
+
+/* ---------- ไอคอนและปุ่มเมนูแบบกระจก (จากไฟล์ดีไซน์) ---------- */
+const SV = (d, w = 1.9) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const IC = {
+  chat: "M5 5h14v10H10l-4 4v-4H5z", steps: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01", pulse: "M3 12h4l3-7 4 14 3-7h4", bars: "M5 20V10M12 20V4M19 20v-7",
+  cal: "M4 7a3 3 0 013-3h10a3 3 0 013 3v11a2 2 0 01-2 2H6a2 2 0 01-2-2zM4 10.4h16M8.6 3v3M15.4 3v3", pace: "M12 21a8 8 0 100-16 8 8 0 000 16zM12 9v4.5l2.8 1.7M9.5 2.5h5",
+  save: "M12 4v10M8 10.5l4 4 4-4M5 19h14", out: "M10 5H6.5A1.5 1.5 0 005 6.5v11A1.5 1.5 0 006.5 19H10M15 8l4 4-4 4M19 12H9", info: "M12 11v5M12 7.5h.01M12 21a9 9 0 100-18 9 9 0 000 18z", x: "M6 6l12 12M18 6L6 18",
+};
+const navBtn = (act, data, rgb, ic, title, sub) => `<button type="button" class="ak-nb" data-act="${act}" ${data}><span class="ak-ni" style="background:linear-gradient(135deg,rgba(${rgb},.42),rgba(${rgb},.1));border:1px solid rgba(${rgb},.5)">${SV(IC[ic])}</span><span class="ak-nt"><b>${title}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</span><span class="ak-na" aria-hidden="true">›</span></button>`;
+const mBtn = (m, v) => `data-m="${m}"${v !== undefined ? ` data-v="${esc(v)}"` : ""}`;
+const stepsSub = (x) => x.steps?.length ? x.steps.map((it) => (it.t === "repeat" ? `${+it.n}×${Steps.amount(it.work)}` : Steps.T[it.t] || "")).filter(Boolean).join(" · ")
+  : x.exercises?.length ? x.exercises.map((e) => e.n).join(" · ") : "ดูรายละเอียดเวิร์คเอาต์";
+const minOf = (list) => list.reduce((s, x) => s + wcalc(x).min, 0);
+
+/* ---------- ข้อความจากโค้ช (จุดแดงบนปุ่มจนกว่าจะเปิดอ่าน) ---------- */
+const msgSeenKey = () => "rp_msgseen:" + me;
+const msgUnread = () => { const s = store.get(msgSeenKey()) || ""; return msgs.some((m) => m.at > s); };
+function msgWhen(iso) {
+  const d = new Date(iso), t = `${pad(d.getHours())}:${pad(d.getMinutes())}`, now = new Date();
+  if (d.toDateString() === now.toDateString()) return `วันนี้ ${t}`;
+  if (d.toDateString() === new Date(now - 864e5).toDateString()) return `เมื่อวาน ${t}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${t}`;
+}
+const demoMsgs = () => [
+  { id: "d1", text: "สัปดาห์นี้ซ้อมได้ดีมาก ขั้น Tempo ให้คุมเพซ LT2 ไว้ ห้ามเร่งเกินนะ", at: new Date().toISOString() },
+  { id: "d2", text: "วิ่งยาววันเสาร์อย่าลืมกินคาร์บก่อนวิ่ง และนอนให้พอคืนวันศุกร์", at: new Date(Date.now() - 864e5).toISOString() },
+];
+
+/* ---------- วาดหน้า (เมนูล่างอยู่คงที่ เปลี่ยนเฉพาะเนื้อหา เพื่อให้แท่งแก้วเลื่อนได้นุ่ม) ---------- */
+const TABS = [["home", "หน้าแรก"], ["stats", "สถิติ"], ["me", "โปรไฟล์"]]; // ปุ่มใน Dock: 2 ช่องในแท่ง + โปรไฟล์เป็นปุ่มกลมแยก
+const PILL = ["home", "stats"], PAGES = new Set(["home", "plan", "stats", "me"]), ORDER = ["plan", "home", "stats", "me"]; // แผนเข้าจากปุ่มมุมซ้ายบน
+let wbWk = null; // สัปดาห์ที่เลือกในกราฟระยะทาง (null = สัปดาห์ปัจจุบัน)
+let CUR = 0, TODAY = "";
+function render() {
+  const weeks = plan?.weeks || [], today = todayStr();
+  const cur = !weeks.length ? 0 : (() => { const i = weeks.findIndex((w) => today >= w.startDate && today <= w.endDate); return i >= 0 ? i : today < weeks[0].startDate ? 0 : weeks.length - 1; })();
+  CUR = cur; TODAY = today;
+  if (wi === null || wi >= weeks.length) wi = cur;
+  INDEX = {}; weeks.forEach((w) => w.days.forEach((d) => d.workouts.forEach((x) => (INDEX[x.id] = { x, date: d.date }))));
+  if (!PAGES.has(tab)) tab = "home";
+  const view = { home: homeView, plan: planView, stats: statsView, me: meView }[tab](weeks, cur, today);
+  if (!root.querySelector(".tabbar")) {
+    root.innerHTML = `<div class="shell"><main class="view" id="view"></main>
+      <nav class="tabbar" aria-label="เมนูหลัก"><div class="tpill"><i class="ind" aria-hidden="true"><i class="gl"></i></i>${TABS.filter(([k]) => PILL.includes(k)).map(([k, l]) => `<button type="button" class="tb" data-act="tab" data-v="${k}" aria-label="${l}">${NAVI[k]}<b class="tl">${l}</b></button>`).join("")}</div><button type="button" class="tb tround" data-act="tab" data-v="me" aria-label="โปรไฟล์">${NAVI.me}<span>โปรไฟล์</span></button></nav></div>`;
+  }
+  { const meb = root.querySelector('.tabbar .tb[data-v="me"]'), a = store.get(avKey()) || ""; // รูปโปรไฟล์ในแท็บ Dock (ถ้ามี)
+    if (meb && meb.dataset.av !== a) { meb.dataset.av = a; meb.innerHTML = (a ? `<img class="tb-av" src="${a}" alt="">` : NAVI.me) + `<span>โปรไฟล์</span>`; } }
+  document.getElementById("view").innerHTML = topBar() + (offline ? `<p class="offline" role="status">ออฟไลน์ แสดงแผนที่โหลดไว้ล่าสุด (ติ๊กทำแล้วได้เมื่อมีเน็ต)</p>` : "") + view;
+  document.body.dataset.tab = tab; document.getElementById("view").classList.toggle("xv", tab !== "me"); moEnter(tab);
+  const bar = root.querySelector(".tabbar");
+  layoutBar();
+  bar.querySelectorAll(".tb").forEach((b) => (b.dataset.v === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
+}
+
+/* ---------- แถบเมนูล่างแบบ iOS 26: แตะ = แท่งเลื่อนนุ่ม ๆ / กดค้างหรือลาก = ยกเป็นเลนส์แก้วตามนิ้ว ปล่อยแล้วเลือกแท็บ ---------- */
+let barIdx = 0, barFlip = 0, barReady = false;
+function layoutBar() {
+  const bar = root.querySelector(".tabbar"); if (!bar) return;
+  const ind = bar.querySelector(".ind"), gl = bar.querySelector(".gl"), i = PILL.indexOf(tab);
+  if (i < 0) { ind.style.opacity = "0"; barIdx = -1; return; } // หน้าแผน/โปรไฟล์ ไม่อยู่ในแท่ง: ซ่อนชิป
+  ind.style.opacity = "1"; ind.style.transform = `translateX(${i * bar.querySelector(".tpill .tb").offsetWidth}px)`;
+  if (barReady && barIdx >= 0 && i !== barIdx) { barFlip = 1 - barFlip; gl.className = "gl j" + barFlip; }
+  barIdx = i; barReady = true;
+}
+(function () {
+  let drag = null, sx = 0, on = false;
+  const idxOf = (e, n) => { const r = n.getBoundingClientRect(); return Math.max(0, Math.min(PILL.length - 1, Math.floor((e.clientX - r.left) / r.width * PILL.length))); };
+  const sel = (i) => { const t = PILL[i]; if (t !== tab) go(t); };
+  document.addEventListener("pointerdown", (e) => { const n = e.target.closest(".tpill"); if (!n) return; drag = n; on = false; sx = e.clientX; });
+  document.addEventListener("pointermove", (e) => { if (!drag) return; if (!on) { if (Math.abs(e.clientX - sx) < 6) return; on = true; try { drag.setPointerCapture(e.pointerId); } catch (_) {} } sel(idxOf(e, drag)); });
+  const end = () => { drag = null; on = false; };
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", end);
+})();
+
+/* แถบบน: ปุ่มแผน (ซ้าย) · โลโก้ K4RC (กลาง) · ข้อความจากโค้ช (ขวา ที่หน้าแรก) */
+function topBar() {
+  const left = tab === "plan"
+    ? `<button type="button" class="ak-rb" data-act="tab" data-v="home" aria-label="กลับหน้าแรก">${NV('<path d="M15 6l-6 6 6 6"/>')}</button>`
+    : tab === "home" ? `<button type="button" class="ak-rb" data-act="tab" data-v="plan" aria-label="แผนซ้อม">${NAVI.plan}</button>` : ""; // ปุ่มแผนมีเฉพาะหน้าแรก
+  const unread = msgUnread();
+  const right = tab === "home" ? `<button type="button" class="ak-rb" data-act="m" data-m="coach" aria-label="ข้อความจากโค้ช${unread ? " (มีข้อความใหม่)" : ""}">${SV(IC.chat, 1.8)}${unread ? `<i class="ak-dot"></i>` : ""}</button>` : "";
+  return `<div class="ktop"><div class="kt-l">${left}</div><i class="klogo" role="img" aria-label="K4RC"></i><div class="kt-r">${right}</div></div>`;
+}
+
+function go(t) {
+  closeM(true);
+  const prev = ORDER.indexOf(tab), changed = t !== tab; tab = t;
+  render(); scrollTo(0, 0);
+  if (changed) { const v = document.getElementById("view"); if (v) { v.style.setProperty("--dx", (ORDER.indexOf(t) > prev ? 1 : -1) * 16 + "px"); v.classList.remove("pgin"); void v.offsetWidth; v.classList.add("pgin"); } }
+  if (t === "home") loadFeed();
+}
+
+/* กราฟแท่งรายสัปดาห์: กรอบ = ตามแผน, แท่งแดง = ที่ทำแล้ว */
+function weekBars(ws, h = 90) {
+  if (!ws.length) return "";
+  const sts = ws.map(wkStats), mx = Math.max(1, ...sts.map((s) => s.planKm));
+  const aria = ws.map((w, i) => `สัปดาห์ ${w.weekNumber} ทำ ${+sts[i].doneKm.toFixed(0)} จากแผน ${+sts[i].planKm.toFixed(0)} กม.`).join(", ");
+  return `<div class="ak-bars${ws.length > 12 ? " many" : ""}" style="height:${h}px" role="img" aria-label="${esc(aria)}">${ws.map((w, i) => {
+    const t = sts[i], th = Math.max(14, Math.round((t.planKm / mx) * 100)), fl = t.planKm ? Math.min(100, Math.round((t.doneKm / t.planKm) * 100)) : t.n ? Math.round((t.doneN / t.n) * 100) : 0;
+    return `<div class="ak-bc${w === plan.weeks[CUR] ? " now" : ""}"><div class="ak-bt" style="height:calc((100% - 1.4rem) * ${th / 100})"><i style="height:${fl}%"></i></div><span>W${w.weekNumber}</span></div>`;
+  }).join("")}</div>`;
+}
+
+/* ---------- ส่วนประกอบหน้าตาใหม่ (ตามต้นแบบ HTML) ---------- */
+const XI = (d, c = "xic") => `<svg class="${c}" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+const XP = { skip: '<path d="M6 5l9 7-9 7z"/><path d="M19 5v14"/>', run: '<circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2 2 4M11 15l-1-4 4-2 2 3 3 1M10 11l-3 2"/>', strength: '<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>', rest: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', race: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', bike: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8"/>', swim: '<path d="M3 17c2 0 2-1.5 4.5-1.5S10 17 12 17s2.5-1.5 4.5-1.5S19 17 21 17M3 12c2 0 2-1.5 4.5-1.5S10 12 12 12s2.5-1.5 4.5-1.5S19 12 21 12"/>', brick: '<rect x="4" y="5" width="16" height="6" rx="1.5"/><rect x="4" y="13" width="16" height="6" rx="1.5"/>',
+  out: '<path d="M7 17L17 7M8 7h9v9"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', list: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>', back: '<path d="M15 6l-6 6 6 6"/>', chk: '<path d="M5 12l5 5 9-10"/>', cal: '<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>', pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>', bars: '<path d="M5 20v-7M12 20V5M19 20v-11"/>' };
+const XCOL = { run: "#d9400f", strength: "#7c4dff", rest: "#5d6a80", race: "#b7791f", bike: "#0f9d6a", swim: "#0b7fb8", brick: "#d6336c" };
+const XF5 = ["สบาย", "พอดี", "เริ่มหนัก", "หนัก", "สุดแรง"];
+const XZ = { e: "Recovery", lt1: "LT1", lt2: "LT2", marathon: "Marathon", k5: "5K", vo2max: "VO2Max", r: "R" };
+const XLV = { lv0: ["#3b7ea6", 28], lv1: ["#d99a00", 35], lv2: ["#d9400f", 42], rest: ["#c7cfdb", 12], unk: ["#c7cfdb", 28] };
+function xZone(x) {
+  let best = -1;
+  (wcalc(x).c?.segs || []).forEach((s) => { if (s.ref && !["rest", "warmup", "cooldown"].includes(s.type)) best = Math.max(best, Steps.REFS.indexOf(s.ref)); });
+  return best >= 0 ? "โซน " + XZ[Steps.REFS[best]] : x.primaryZone || "";
+}
+function xGraph(segs, label) {
+  if (!segs?.length) return "";
+  return `<div class="xgr" role="img" aria-label="${esc(label || "กราฟโครงสร้างการซ้อม")}">${segs.map((s) => { const [c, h] = XLV[segClass(s)] || XLV.unk; return `<i style="flex:${Math.max(1, s.sec ?? (s.m ? (s.m / 1000) * 360 : 60)).toFixed(0)};height:${h}px;background:${c}"></i>`; }).join("")}</div>${label ? `<p class="xgc">${esc(String(label).replace(/^[^:]*:\s*/, ""))}</p>` : ""}`;
+}
+// การ์ดเวิร์คเอาต์ (ใช้ทั้งหน้าแรกและหน้าแผน) home=true ใช้ปุ่มแชร์แบบเดิมของหน้าแรก
+function xCard(x, home) {
+  const on = !!done[x.id], col = XCOL[x.sport] || XCOL.run, sk = !on && !!skip[x.id], skDt = INDEX[x.id]?.date, skLbl = !skDt || skDt === TODAY ? "ข้ามวันนี้" : "ข้าม";
+  if (x.sport === "rest") return `<article class="xk xcard"><div class="xrl"><div class="xsd" style="--z:${col}">${XI(XP.rest)}</div><div><p class="xlb">${SPORT.rest}</p></div></div><h2>${esc(x.name)}</h2>${x.humanReadable || x.description ? `<p class="xm">${esc(x.humanReadable || x.description)}</p>` : ""}</article>`;
+  const { c, min, m } = wcalc(x), miss = c?.missing?.map((r) => Steps.REF_LABEL[r]) || [], zone = xZone(x);
+  const chips = [min ? `${clockMin(min)} ${clockUnit(min)}` : "", m ? `${+(m / 1000).toFixed(1)} กม.` : "", x.exercises?.length ? `${x.exercises.length} ท่า` : "", min ? `โหลด ${Math.round(loadOf(x))}` : ""].filter(Boolean);
+  const f = fb[x.id], lv = f?.rpe ? Math.ceil(f.rpe / 2) : 0;
+  const ex = !c && x.exercises?.length ? `<div class="xchips">${x.exercises.slice(0, 4).map((e) => `<span class="xpl">${esc(e.n)}</span>`).join("")}${x.exercises.length > 4 ? `<span class="xpl">+${x.exercises.length - 4}</span>` : ""}</div>` : "";
+  const share = on ? (home ? `<button type="button" class="btn ak-w" data-act="m" data-m="share" data-v="${esc(x.id)}">แชร์เวิร์คเอาต์</button>` : navBtn("m", mBtn("share", x.id), "255,74,80", "share", "แชร์เวิร์คเอาต์", "ใส่รูป แล้วบันทึกภาพลงโซเชียล")) : "";
+  return `<article class="xk xcard" style="--c:${col}">
+    <div class="xr"><div class="xrl"><div class="xsd" style="--z:${col}">${XI(XP[x.sport] || XP.run)}</div><div><p class="xlb">${SPORT[x.sport] || x.sport}${x.type ? " · " + esc(x.type) : ""}${on ? " · ทำแล้ว" : sk ? " · ข้าม" : ""}</p><p class="xm">${esc(zone || (x.rpe ? "RPE " + x.rpe : "") || " ")}${!on && !sk && x.rpe >= 7 ? " · สำคัญ" : ""}</p></div></div>
+      <button type="button" class="xci sm" data-act="m" data-m="steps" data-v="${esc(x.id)}" aria-label="เปิดดูรายละเอียด">${XI(XP.out)}</button></div>
+    <h2>${esc(x.name)}</h2>${c ? xGraph(c.segs, "กราฟโครงสร้างการซ้อม: " + Steps.text(x.steps, paces).replace(/\n/g, ", ")) : ""}${ex}
+    ${chips.length ? `<div class="xchips">${chips.map((t) => `<span class="xpl">${t}</span>`).join("")}</div>` : ""}
+    ${miss.length ? `<p class="xwarn">โค้ชยังไม่ได้ตั้งเพซ ${esc(miss.join(", "))} กราฟและเวลายังไม่ครบ</p>` : ""}
+    ${on ? `<div class="xdnp">${XI(XP.chk)}ทำเสร็จแล้ว${lv ? " · รู้สึก" + XF5[lv - 1] : ""}</div>${fbLine(f)}<button type="button" class="xbtn w" data-act="fb" data-id="${esc(x.id)}">แก้ไขความรู้สึก</button>${share}` : `${sk ? `<div class="xdnp xsk">${XI(XP.skip)}ข้ามแล้ว</div>` : ""}<div class="xbrow"><button type="button" class="xbtn w" data-act="${sk ? "unskip" : "skip"}" data-id="${esc(x.id)}">${sk ? "ยกเลิกข้าม" : skLbl}</button><button type="button" class="xbtn" data-act="done" data-id="${esc(x.id)}">ทำเสร็จแล้ว</button></div>`}</article>`;
+}
+const xNav = (ic, col, title, sub, act) => `<div class="xk xr xnav"><div class="xrl" style="gap:12px"><div class="xsd" style="--z:${col}">${XI(XP[ic])}</div><div><p class="xnavt"><b>${title}</b></p><p class="xm" style="font-size:12px">${sub}</p></div></div><button type="button" class="xci sm" data-act="m" ${act} aria-label="เปิดดูรายละเอียด">${XI(XP.out)}</button></div>`;
+
+// การ์ดเวิร์คเอาต์ของวันที่เลือก: ดูสรุป กดทำเสร็จแล้ว หรือเปิดขั้นตอนและเพซในหน้าต่างย่อย
+function wcard(x) { return xCard(x, false); }
+function planView(weeks, cur, today) {
+  if (!weeks.length) return `<h1 class="k-sr">แผน</h1><p class="notice">โค้ชยังไม่ได้ลงแผนซ้อมให้คุณ กลับมาดูใหม่ภายหลัง</p>`;
+  const w = weeks[wi], st = wkStats(w), dates = w.days.map((d) => d.date);
+  if (!sel || !dates.includes(sel)) sel = dates.includes(today) ? today : (w.days.find((d) => trainOf(d).length) || w.days[0]).date;
+  const day = w.days.find((d) => d.date === sel);
+  const items = w.days.flatMap((d) => trainOf(d).map((x) => ({ x, date: d.date })));
+  const dn = items.filter((o) => done[o.x.id]), minDone = dn.reduce((s, o) => s + wcalc(o.x).min, 0), load = dn.reduce((s, o) => s + loadOf(o.x), 0);
+  const strip = w.days.map((d, i) => {
+    const tr = trainOf(d), allDone = tr.length && tr.every((x) => done[x.id]), allSkip = tr.length && !allDone && tr.every((x) => done[x.id] || skip[x.id]);
+    return `<button type="button" class="xch${d.date === sel ? " to" : d.date === today ? " td" : ""}${allDone ? " dn" : allSkip ? " sk" : ""}" data-act="day" data-d="${d.date}" aria-pressed="${d.date === sel}" aria-label="${longDate(d.date)}${allDone ? " ทำแล้ว" : ""}"><span>${DAYS[i].replace(".", "")}</span><b>${dayNum(d.date)}</b><i></i></button>`;
+  }).join("");
+  const pct = st.planKm ? Math.min(100, Math.round((st.doneKm / st.planKm) * 100)) : st.n ? Math.round((st.doneN / st.n) * 100) : 0;
+  return `<h1 class="k-sr">แผน</h1>
+    <section class="xk xwk" aria-label="สรุปสัปดาห์">
+      <div class="xr"><div><p class="xlb">สัปดาห์ ${w.weekNumber} จาก ${weeks.length}</p><p class="xm">${rangeLabel(w.startDate)}${w.phase || w.focus ? " · " + esc([w.phase, w.focus].filter(Boolean).join(" · ")) : ""}</p></div>
+        <div style="display:flex;gap:8px"><button type="button" class="xci sm" data-act="wk" data-d="-1" aria-label="สัปดาห์ก่อน"${wi === 0 ? " disabled" : ""}>${XI(XP.back)}</button><button type="button" class="xci sm" data-act="m" data-m="week" data-v="${wi}" aria-label="ดูแผนทั้งสัปดาห์">${XI(XP.list)}</button><button type="button" class="xci sm" data-act="wk" data-d="1" aria-label="สัปดาห์ถัดไป"${wi === weeks.length - 1 ? " disabled" : ""}>${XI('<path d="M9 6l6 6-6 6"/>')}</button></div></div>
+      <div class="xdays">${strip}</div><div class="xpg"><i style="width:${pct}%"></i></div>
+      <div class="xsum"><span><b>${+st.doneKm.toFixed(0)}</b>/${+st.planKm.toFixed(0)} กม.</span><span><b>${st.doneN}/${st.n}</b> ครั้ง</span><span>เวลา <b>${fmtHM(minDone)}</b></span><span>โหลด <b>${Math.round(load)}</b></span></div>
+      ${wi !== cur ? `<button type="button" class="xbtn w" data-act="wkjump" data-i="${cur}">กลับไปสัปดาห์นี้</button>` : ""}</section>
+    <p class="xlb" style="margin:2px 0 -4px 4px">${day.date === today ? "วันนี้ · " : ""}${longDate(day.date)}</p>
+    ${day.workouts.length ? day.workouts.map(wcard).join("") : `<p class="notice">ไม่มีเวิร์คเอาต์ในวันนี้</p>`}
+    ${xNav("cal", "#4a78e0", "ปฏิทินเดือน", "ดูทั้งเดือน กดวันเพื่อไปที่วันนั้น", mBtn("cal"))}
+    ${demo ? `<p class="foot">นี่คือตัวอย่าง ข้อมูลจริงจะขึ้นเมื่อเข้าสู่ระบบ</p>` : ""}`;
+}
+
+/* ---------- ฟีดทีม (24 ชม.) ---------- */
+const FEED_MS = 24 * 3600e3;
+const RUNNER = `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="21" cy="6" r="3.1" fill="currentColor" stroke="none"/><path d="M18.3 11.2L13.8 18.2M18.3 11.5L23.8 14L27 10.8M18.3 11.5L13.2 12.6L10.6 17M13.8 18.2L19.8 21.6L18.6 27.4L22 27.6M13.8 18.2L9.2 23L4.6 21.6"/><path d="M2 9.5h6M.8 14h5" stroke-width="1.9" opacity=".55"/></svg>`;
+const rpeC = (r) => (r >= 7 ? "#ff3b46" : r >= 5 ? "#ffa24a" : "#2fd8ff");
+const FEEL_C = ["", "#ff6b73", "#ff9a7a", "#c4c4c8", "#7be8a8", "#2eff90"];
+const favHtml = (url, name, cls = "") => `<span class="fav ${cls}">${url ? `<img src="${esc(url)}" alt="">` : esc(initials(name))}</span>`;
+const avcGet = () => { try { return JSON.parse(store.get("rp_avc") || "{}"); } catch { return {}; } };
+const feedUrl = () => "/api/feed?av=" + Object.entries(avcGet()).map(([k, v]) => `${k}:${v.h}`).join(",");
+async function loadFeed(force) { // force = รีเฟรชทันที (หลังบันทึกผล/อัปโหลดรูป/เปิดแอป) ที่เหลือ (สลับแท็บ กลับเข้าแอป) ไม่ยิงซ้ำภายใน 45 วินาที ลดจำนวนครั้งที่เรียกฟังก์ชัน
+  if (demo || offline || !token) return;
+  if (!force && loadFeed.at && Date.now() - loadFeed.at < 45000) return;
+  loadFeed.at = Date.now();
+  const prevSig = JSON.stringify([feed, feedAv]); // เทียบก่อน-หลังโหลด กัน render() ซ้ำโดยไม่มีอะไรเปลี่ยน (เห็นเป็นจอกะพริบ/รีเฟรชซ้ำตอนสลับมาหน้าแรก)
+  try {
+    const pre = window.__feedP; window.__feedP = null;
+    const d = (pre && (await pre)) || (await call(feedUrl())), c = avcGet(); // เครื่องจำรูปเพื่อนไว้ เซิร์ฟเวอร์ส่งเฉพาะรูปที่เปลี่ยน
+    for (const [id, img] of Object.entries(d.avatars || {})) c[id] = { h: d.avh?.[id], img };
+    feed = d.posts || []; feedAv = {}; for (const id of Object.keys(d.avh || {})) if (c[id]?.img) feedAv[id] = c[id].img;
+    const ks = Object.keys(c); if (ks.length > 60) ks.slice(0, ks.length - 60).forEach((k) => delete c[k]);
+    try { store.set("rp_avc", JSON.stringify(c)); } catch {}
+    const mine = feed.find((p) => p.me); if (mine && !feedAv[mine.aid] && store.get(avKey()) && !loadFeed.healed) { loadFeed.healed = 1; pushAvatar(store.get(avKey())); }
+  } catch { return; }
+  if (tab === "home" && !dlg.open && JSON.stringify([feed, feedAv]) !== prevSig) render();
+}
+setInterval(() => { if (tab === "home" && !document.hidden && !dlg.open) loadFeed(); }, 180000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && tab === "home") loadFeed(); });
+function demoFeed() {
+  const h = (n) => new Date(Date.now() - n * 3600e3).toISOString(), d0 = todayStr();
+  return [
+    { id: "x1", aid: "x1", name: "แพรว สุขใจ", sport: "run", title: "Easy run", km: 8.2, min: 52.4, rpe: 3, feel: 5, at: h(0.6), date: d0 },
+    { id: "x2", aid: "x2", name: "ก้อง ภูมิ", sport: "run", title: "Intervals 6×800 ม.", km: 10.5, min: 56, rpe: 8, feel: 3, at: h(3), date: d0 },
+    { id: "x3", aid: "x3", name: "มินท์ ศรี", sport: "strength", title: "Strength 20 นาที", km: 0, min: 22, rpe: 5, feel: 4, at: h(9), date: d0 },
+    { id: "x4", aid: "x4", name: "บอส วงศ์", sport: "run", title: "Long run", km: 21.1, min: 128, rpe: 7, feel: 2, at: h(19.5), date: d0 },
+  ];
+}
+function feedCard(p) {
+  const left = Math.max(0, FEED_MS - (Date.now() - Date.parse(p.at))), lh = left >= 3600e3 ? `${Math.ceil(left / 3600e3)} ชม.` : `${Math.max(1, Math.ceil(left / 60e3))} นาที`;
+  const run = p.sport === "run" || p.sport === "race", pace = run && p.km >= 0.5 && p.min ? p.min / p.km : 0;
+  const st = [p.km ? ["ระยะทาง", String(+(+p.km).toFixed(2)), "กม."] : null, p.min ? ["เวลา", fmtT(p.min), p.min >= 60 ? "ชม." : "นาที"] : null, pace ? ["เพซ", fmtPace(pace), "/กม."] : null].filter(Boolean);
+  const url = p.me ? store.get(avKey()) || feedAv[p.aid] : feedAv[p.aid], C = rpeC(p.rpe);
+  return `<article class="fp${p.me ? " mine" : ""}" style="--c:${C}">
+    <div class="fp-h">${favHtml(url, p.name)}<div class="fp-who"><b>${esc(p.name)}${p.me ? " (คุณ)" : ""}</b><span class="sx">${msgWhen(p.at)} · ${SPORT[p.sport] || p.sport}</span></div><span class="fp-exp">หายใน ${lh}</span></div>
+    <h3 class="fp-t">${esc(p.title)}</h3>
+    ${st.length ? `<div class="fp-n">${st.map(([l, v, u]) => `<div><span class="sx">${l}</span><b>${v}<small> ${u}</small></b></div>`).join("")}</div>` : ""}
+    <div class="fp-f"><div class="fp-r" role="img" aria-label="ความเหนื่อย ${p.rpe} จาก 10"><span class="sx">ความเหนื่อย <b style="color:${C}">${p.rpe}/10</b> ${RPE_L[p.rpe] || ""}</span><span class="fp-m">${Array.from({ length: 10 }, (_, i) => `<i${i < p.rpe ? ' class="on"' : ""}></i>`).join("")}</span></div>
+      ${p.feel ? `<span class="fp-feel" style="--f:${FEEL_C[p.feel]}"><i></i>รู้สึก${FEEL_L[p.feel]}</span>` : ""}</div>
+    <div class="fp-life" aria-hidden="true"><i style="width:${Math.round((left / FEED_MS) * 100)}%"></i></div></article>`;
+}
+function feedHtml() {
+  const list = feed.filter((p) => Date.now() - Date.parse(p.at) < FEED_MS).sort((a, b) => b.at.localeCompare(a.at));
+  return `<section class="team"><h2 class="h2t">ทีมวันนี้</h2><p class="sx fp-sub">ผลซ้อมของเพื่อนร่วมทีมใน 24 ชั่วโมงล่าสุด โพสต์จะหายไปเอง</p>
+    ${list.length ? list.map(feedCard).join("") : `<p class="notice">ยังไม่มีใครโพสต์ใน 24 ชั่วโมงที่ผ่านมา ซ้อมเสร็จแล้วกด "ทำเสร็จแล้ว" และให้คะแนนความเหนื่อย ผลของคุณจะขึ้นที่นี่</p>`}</section>`;
+}
+
+// แถบสัปดาห์นี้ (วันที่ทำแล้วเป็นวงกลมติ๊ก) + จำนวนสัปดาห์ติดต่อกัน
+function homeStrip(weeks, today) {
+  const S = weeks.length ? athStats(weeks, today) : null, mon = mondayOf(today), by = {};
+  Object.values(INDEX).forEach((o) => (by[o.date] ||= []).push(o.x));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(mon, i), tr = (by[date] || []).filter((x) => x.sport !== "rest"), dn = tr.filter((x) => done[x.id]).length;
+    const cls = tr.length && dn === tr.length ? "done" : dn ? "part" : tr.length && tr.every((x) => done[x.id] || skip[x.id]) ? "skip" : date === today ? "today" : date < today && tr.length ? "miss" : "";
+    return `<button type="button" class="hs-d" ${by[date] ? `data-act="dayjump" data-d="${date}"` : "disabled"} aria-label="${longDate(date)}${cls === "done" ? " ทำแล้ว" : cls === "skip" ? " ข้าม" : ""}"><span>${DAYS[i].replace(".", "")}</span><span class="hs-c ${cls}${date === today ? " now" : ""}">${cls === "done" ? ICON.done : dayNum(date)}</span></button>`;
+  }).join("");
+  return `<section class="ak-g hstrip" aria-label="สัปดาห์นี้"><div class="hs-top"><div class="hs-fl" aria-label="ต่อเนื่อง ${S?.cur || 0} สัปดาห์">${RUNNER}<b>${S?.cur || 0}</b><span>สัปดาห์</span></div><div class="hs-days">${days}</div></div></section>`;
+}
+
+// หน้า Home: ทักทาย + แถบสัปดาห์ + เวิร์คเอาต์วันนี้ + ฟีดทีม 24 ชม.
+function homeView(weeks, cur, today) {
+  const head = `<h1 class="k-sr">หน้าแรก</h1>`;
+  if (!weeks.length) return head + `<p class="notice">โค้ชยังไม่ได้ลงแผนซ้อมให้คุณ กลับมาดูใหม่ภายหลัง</p>` + feedHtml();
+  const w = weeks[cur];
+  const km = (x) => { const m = wcalc(x).m; return m ? `${+(m / 1000).toFixed(1)} กม.` : ""; };
+  const tw = w.days.find((d) => d.date === today)?.workouts || [];
+  const tcard = (x) => (x.sport === "rest" ? `<article class="tcard s-rest"><b class="tc-t">วันนี้พักผ่อน</b><p class="small">${esc(x.humanReadable || x.description || "ให้ร่างกายได้ฟื้นตัว")}</p></article>` : xCard(x, true));
+  return `${head}
+    ${homeStrip(weeks, today)}
+    <div class="hcol">${tw.length ? tw.map(tcard).join("") : `<p class="notice">ไม่มีเวิร์คเอาต์ในวันนี้</p>`}</div>
+    ${feedHtml()}
+    ${demo ? `<p class="foot">นี่คือตัวอย่าง ข้อมูลจริงจะขึ้นเมื่อเข้าสู่ระบบ</p>` : ""}`;
+}
+
+const RANGES = ["4 สัปดาห์", "8 สัปดาห์", "ทั้งแผน"]; let rng = 1;
+function statsView(weeks, cur, today) {
+  if (!weeks.length) return `<h1 class="k-sr">สถิติ</h1><p class="notice">ยังไม่มีแผน</p>`;
+  const n = [4, 8, 0][rng], ws = n ? weeks.slice(Math.max(0, cur - n + 1), cur + 1) : weeks;
+  const items = ws.flatMap((w) => w.days.flatMap((d) => trainOf(d).map((x) => ({ x, date: d.date })))), dn = items.filter((o) => done[o.x.id]), due = items.filter((o) => o.date <= today);
+  const km = dn.reduce((s, o) => s + kmOf(o.x), 0), mins = dn.reduce((s, o) => s + minOfX(o.x), 0);
+  const pct = due.length ? Math.round((due.filter((o) => done[o.x.id]).length / due.length) * 100) : 0;
+  const perfect = ws.filter((w) => { const t = wkStats(w); return t.n && t.doneN === t.n; }).length;
+  const sts = ws.map(wkStats), mx = Math.max(1, ...sts.map((s) => Math.max(s.planKm, s.doneKm)));
+  const selI = (() => { const i = ws.findIndex((w) => w.weekNumber === wbWk); return i >= 0 ? i : Math.max(0, ws.findIndex((w) => w === weeks[cur])); })(), few = ws.length <= 8;
+  const bars = sts.map((t, i) => { const w = ws[i], on = i === selI, p = Math.round((t.doneKm / mx) * 100);
+    return `<button type="button" class="wb-c${on ? " on" : ""}" style="--j:${i}" data-act="wbar" data-v="${w.weekNumber}" aria-pressed="${on}" aria-label="สัปดาห์ ${w.weekNumber} ทำ ${+t.doneKm.toFixed(0)} จากแผน ${+t.planKm.toFixed(0)} กม.">${on ? `<span class="wb-tip">${+t.doneKm.toFixed(0)} กม.<em>/ ${+t.planKm.toFixed(0)}</em></span>` : ""}<span class="wb-t">${p ? `<i style="height:${p}%"></i>` : ""}</span><b>${few || on || i % 4 === 0 ? "W" + w.weekNumber : ""}</b></button>`; }).join("");
+  const aria = ws.map((w, i) => `สัปดาห์ ${w.weekNumber} ทำ ${+sts[i].doneKm.toFixed(0)} จากแผน ${+sts[i].planKm.toFixed(0)} กม.`).join(", ");
+  return `<h1 class="k-sr">สถิติ</h1>
+    <div class="xsg" role="group" aria-label="ช่วงเวลา">${RANGES.map((t, i) => `<button type="button" data-act="rng" data-v="${i}" aria-pressed="${rng === i}">${t}</button>`).join("")}</div>
+    <div class="xk xgauge"><div><p style="font-weight:600">ทำตามแผน</p><p style="margin-top:4px">สัปดาห์ที่ทำครบ ${perfect}</p></div>
+      <svg viewBox="0 0 100 100" role="img" aria-label="ทำตามแผน ${pct} เปอร์เซ็นต์"><circle cx="50" cy="50" r="40" fill="none" stroke="rgb(var(--fg,255 255 255)/.14)" stroke-width="10"/><circle cx="50" cy="50" r="40" fill="none" stroke="#e96445" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(pct / 100 * 251.3).toFixed(1)} 251.3" transform="rotate(-90 50 50)"/><text x="50" y="${pct > 99 ? 55.4 : 56.8}" text-anchor="middle" font-size="${pct > 99 ? 15 : 19}" font-weight="500" fill="var(--tx,#fff)" font-family="K4 Jakarta,K4 Noto,sans-serif" data-count="${pct}" data-suf="%">${pct}%</text></svg></div>
+    <div class="xbxs"><div class="xbx"><b data-count="${+km.toFixed(0)}">${+km.toFixed(0)}</b><span>กม. ที่ซ้อมแล้ว</span></div><div class="xbx"><b data-time="${Math.round(mins)}">${fmtHM(mins)}</b><span>ชั่วโมงที่ซ้อม</span></div><div class="xbx"><b data-count="${perfect}">${perfect}</b><span>สัปดาห์ครบ</span></div></div>
+    <section class="xk"><p class="xlb">ระยะทางรายสัปดาห์</p><div class="wb" role="group" aria-label="ระยะทางรายสัปดาห์ แตะแท่งเพื่อดูตัวเลข">${bars}</div><p class="xm" style="margin-top:12px;font-size:12px">ส่วนที่เติมสี = กม. ที่ซ้อมแล้ว · แตะแท่งเพื่อดูเทียบกับแผน</p></section>
+    ${xNav("pulse", "#8466e0", "Fitness · Fatigue · Form", "กราฟความพร้อมของร่างกาย", mBtn("fff"))}
+    ${xNav("bars", "#3aa57c", "เทียบสัปดาห์ก่อน", "ระยะทาง ความเหนื่อย", mBtn("compare"))}`;
+}
+
+function paceRows() {
+  const v = paces?.values || {}, any = hasPaceVal();
+  const sp = PACES.map((p) => ({ p, ps: Steps.parsePace(v[p.k]) })), spd = sp.filter((o) => o.ps).map((o) => 3600 / o.ps);
+  const lo = Math.min(...spd), hi = Math.max(...spd);
+  return `${paces?.updatedAt ? `<p class="sx" style="margin:-4px 0 12px;text-align:center">โค้ชอัปเดต ${shortDate(paces.updatedAt.slice(0, 10))}</p>` : ""}
+    ${any ? sp.map(({ p, ps }) => `<div class="pz pz-${p.k}"><span class="pz-k">${p.label}</span><span class="pzbar" aria-hidden="true">${ps ? `<i style="width:${hi > lo ? Math.round(28 + (72 * (3600 / ps - lo)) / (hi - lo)) : 100}%"></i>` : ""}</span>${v[p.k] ? `<b class="pz-v">${esc(paceText(v[p.k]))}</b>` : `<span class="pz-v none">–</span>`}</div>`).join("") : `<p class="notice">โค้ชยังไม่ได้ใส่เพซให้คุณ</p>`}
+    ${any ? `<p class="sx" style="margin:10px 0 0">แท่งยาว = เร็วกว่า</p>` : ""}
+    ${paces?.note ? `<div class="ak-h">หมายเหตุจากโค้ช</div><p style="margin:0;white-space:pre-wrap">${esc(paces.note)}</p>` : ""}`;
+}
+/* ---------- โปรไฟล์ (แท็บ: ความก้าวหน้า / กิจกรรม / ข้อมูล / เพิ่มเติม) ---------- */
+function wk12(f) {
+  const mon = mondayOf(TODAY), t0 = Date.parse(addDays(mon, -77) + "T00:00:00Z");
+  const out = Array.from({ length: 12 }, (_, i) => ({ start: addDays(mon, -7 * (11 - i)), km: 0, min: 0, n: 0 }));
+  Object.entries(INDEX).forEach(([id, o]) => {
+    if (!done[id] || o.x.sport === "rest" || (f === "run" && o.x.sport !== "run" && o.x.sport !== "race")) return;
+    const k = Math.floor((Date.parse(o.date + "T00:00:00Z") - t0) / (7 * 864e5));
+    if (k >= 0 && k < 12) { out[k].km += kmOf(o.x); out[k].min += minOfX(o.x); out[k].n++; }
+  });
+  return out;
+}
+function pgChart(ws, f, sel) {
+  const key = f === "run" ? "km" : "h", val = (w) => (key === "km" ? w.km : w.min / 60), unit = key === "km" ? "กม." : "ชม.";
+  const mx0 = Math.max(0, ...ws.map(val)), mx = (key === "km" ? [10, 20, 30, 40, 60, 80, 100, 150, 200, 300] : [2, 4, 6, 8, 10, 15, 20, 30]).find((v) => v >= mx0) || Math.ceil(mx0 / 10) * 10;
+  const L = 10, R = 288, T = 14, B = 150, xs = (i) => L + ((R - L) * i) / 11, ys = (v) => B - ((B - T) * v) / mx;
+  const pts = ws.map((w, i) => [xs(i), ys(val(w))]), line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const grid = [mx, mx / 2, 0].map((v) => `<line x1="${L}" x2="${R}" y1="${ys(v)}" y2="${ys(v)}" stroke="rgb(var(--fg,255 255 255)/.12)"/><text x="${R + 8}" y="${ys(v) + 4}">${+v.toFixed(1)} ${unit}</text>`).join("");
+  const months = ws.map((w, i) => (i && w.start.slice(5, 7) !== ws[i - 1].start.slice(5, 7) ? `<text x="${xs(i)}" y="${B + 22}" text-anchor="middle">${monthName(w.start)}</text>` : "")).join("");
+  const sx = xs(sel), sy = pts[sel][1], aria = ws.map((w) => `${rangeLabel(w.start)} ${+val(w).toFixed(1)} ${unit}`).join(", ");
+  return `<svg class="pgc" viewBox="0 0 340 182" role="img" aria-label="12 สัปดาห์ที่ผ่านมา: ${esc(aria)}"><defs><linearGradient id="pgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4a50" stop-opacity=".5"/><stop offset="1" stop-color="#ff4a50" stop-opacity="0"/></linearGradient></defs>
+    ${grid}<path d="${line} L${xs(11)} ${B} L${xs(0)} ${B}Z" fill="url(#pgG)"/><path d="${line}" fill="none" stroke="#ff4a50" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="${sx}" x2="${sx}" y1="${T - 4}" y2="${B}" stroke="var(--tx,#fff)" stroke-width="2"/>
+    ${pts.map(([x, y], i) => (i === sel ? "" : `<circle cx="${x}" cy="${y}" r="3.6" fill="var(--c1,#0b0b0c)" stroke="#ff4a50" stroke-width="2"/>`)).join("")}
+    <circle cx="${sx}" cy="${sy}" r="9" fill="#ff4a50" opacity=".3"/><circle cx="${sx}" cy="${sy}" r="4.6" fill="#ff4a50" stroke="var(--tx,#fff)" stroke-width="1.5"/>${months}
+    ${pts.map(([x], i) => `<rect data-act="pw" data-i="${i}" x="${x - (R - L) / 22}" y="0" width="${(R - L) / 11}" height="${B}" fill="transparent"/>`).join("")}</svg>`;
+}
+function monthDots(today) {
+  const ym = today.slice(0, 7), lead = dowIdx(ym + "-01"), n = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0).getDate(), ds = new Set();
+  Object.entries(INDEX).forEach(([id, o]) => { if (done[id] && o.x.sport !== "rest") ds.add(o.date); });
+  return `<div class="md-g" role="img" aria-label="วันที่ซ้อมเดือนนี้ ${[...ds].filter((d) => d.startsWith(ym)).length} วัน">${DAYS.map((d) => `<span class="md-h">${d.replace(".", "")}</span>`).join("")}${Array.from({ length: lead }, () => "<i></i>").join("")}${Array.from({ length: n }, (_, i) => { const d = `${ym}-${pad(i + 1)}`; return `<i class="md2${ds.has(d) ? " on" : ""}${d === today ? " now" : ""}"></i>`; }).join("")}</div>`;
+}
+function progressTab(S, today) {
+  const ws = wk12("all"), sel = Math.min(11, Math.max(0, psel)), w = ws[sel];
+  return `<section class="pg">
+      <h2 class="pg-t" style="margin-top:0">${sel === 11 ? "สัปดาห์นี้" : "สัปดาห์ " + rangeLabel(w.start)}</h2>
+      <div class="pg-n"><div><span class="sx">ระยะทาง</span><b>${+w.km.toFixed(2)}<small> กม.</small></b></div><div><span class="sx">เวลา</span><b>${fmtHM(w.min)}<small> ชม.</small></b></div><div><span class="sx">จำนวนครั้ง</span><b>${w.n}<small> ครั้ง</small></b></div></div>
+      <p class="sx" style="margin:18px 0 0">12 สัปดาห์ที่ผ่านมา · แตะกราฟเพื่อดูแต่ละสัปดาห์</p>${pgChart(ws, "run", sel)}
+      <button type="button" class="btn ak-w" data-act="tab" data-v="stats">ดูความก้าวหน้าเพิ่มเติม</button></section>
+    <section class="pg"><button type="button" class="pg-sh" data-act="m" data-m="cal"><b>ความต่อเนื่อง</b><span class="sx">เดือนนี้ ›</span></button>
+      <div class="pg-st"><span class="pg-fl">${RUNNER}</span><div><b class="ak-bignum">${S?.cur || 0}</b> <span class="sx">สัปดาห์ติดต่อกัน${S?.best ? ` · สูงสุด ${S.best}` : ""}</span></div></div>${monthDots(today)}</section>`;
+}
+function activitiesTab() {
+  const acts = Object.entries(INDEX).filter(([id, o]) => done[id] && o.x.sport !== "rest").sort((a, b) => b[1].date.localeCompare(a[1].date)).slice(0, 60);
+  if (!acts.length) return `<p class="notice">ยังไม่มีกิจกรรมที่ทำแล้ว ติ๊ก "ทำเสร็จแล้ว" หลังซ้อม กิจกรรมจะขึ้นที่นี่</p>`;
+  return `<section class="ak-g" style="padding:2px 14px">${acts.map(([id, o]) => {
+    const k = kmOf(o.x), m = minOfX(o.x), r = fb[id]?.rpe, meta = [k ? `${+k.toFixed(2)} กม.` : "", m ? `${fmtT(m)} ${m >= 60 ? "ชม." : "นาที"}` : "", r ? `RPE ${r}` : ""].filter(Boolean).join(" · ");
+    return `<button type="button" class="ak-wr dn" data-act="m" data-m="steps" data-v="${esc(id)}">${shield(o.x, true)}<span><span class="sx">${longDate(o.date)}</span><b>${esc(o.x.name)}</b>${meta ? `<em>${meta}</em>` : ""}</span></button>`;
+  }).join("")}</section>`;
+}
+function infoTab(weeks, today) {
+  const cards = profileCards(weeks, today);
+  return (cards || "") + moreTab(!!cards);
+}
+function moreTab(gap) {
+  const nz = hasPaceVal() ? PACES.filter((p) => paces.values?.[p.k]).length : 0;
+  return `<div class="ak-navs" style="margin-top:${gap ? 14 : 0}px">
+      ${navBtn("m", mBtn("pace"), "255,90,77", "pace", "เพซของฉัน", nz ? `${nz} โซน` : "โค้ชยังไม่ได้ตั้ง")}
+      <div class="xk thm-row"><span>ธีมสี</span>${k4Theme.seg()}</div>
+      ${installBtn("btn ak-w")}
+      ${store.get(avKey()) ? navBtn("avatarrm", "", "255,255,255", "x", "ลบรูปโปรไฟล์", "") : ""}
+      ${navBtn("m", mBtn("backup"), "0,170,255", "save", "สำรองแผน", "")}
+      ${navBtn(demo ? "noop" : "logout", "", "255,255,255", "out", demo ? "โหมดตัวอย่าง" : "ออกจากระบบ", "")}</div>`;
+}
+async function shareProfile() {
+  const n = Object.keys(INDEX).filter((id) => done[id]).length, S = plan ? athStats(plan.weeks, TODAY) : null;
+  const text = `${me} · K4RC\n${n} กิจกรรม${S ? ` · ${+S.km.toFixed(0)} กม. · ต่อเนื่อง ${S.cur} สัปดาห์` : ""}`;
+  try { if (navigator.share) { await navigator.share({ title: me, text }); return; } } catch (e) { if (e.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(text); alert("คัดลอกข้อความแล้ว"); } catch { alert(text); }
+}
+function meView(weeks, cur, today) {
+  const S = weeks.length ? athStats(weeks, today) : null, n = Object.keys(INDEX).filter((id) => done[id] && INDEX[id].x.sport !== "rest").length;
+  const T = [["prog", "ความก้าวหน้า", IC.bars], ["acts", "กิจกรรม", IC.pulse], ["info", "ข้อมูล", IC.user]];
+  const body = ptab === "acts" ? activitiesTab() : ptab === "info" ? infoTab(weeks, today) : progressTab(S, today);
+  return `<div class="pf-top">${avatarBtn()}<div class="pf-id"><h1>${esc(me)}</h1><p>${n} กิจกรรม</p>${S?.cur ? `<p class="pf-fire"><span>${RUNNER}</span>${S.cur} สัปดาห์ติดต่อกัน</p>` : ""}</div></div>
+    <div class="pf-btns"><button type="button" class="btn" data-act="m" data-m="profile">แก้ไขโปรไฟล์</button><button type="button" class="btn" data-act="shareprof">แชร์โปรไฟล์</button></div>
+    <div class="pf-tabs" role="tablist">${T.map(([k, l, ic]) => `<button type="button" role="tab" class="pf-tab" data-act="ptab" data-v="${k}" aria-selected="${ptab === k}">${SV(ic, 1.8)}<span>${l}</span></button>`).join("")}</div>
+    ${body}`;
+}
+
+/* ---------- ปฏิทินรายเดือน (เปิดจากหน้าแผน) ---------- */
+let cm = null; // เดือนที่แสดงในปฏิทิน "YYYY-MM"
+const addMonth = (ym, n) => { const [y, m] = ym.split("-").map(Number), t = y * 12 + (m - 1) + n; return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}`; };
+function calHtml(weeks, cur, today) {
+  if (!weeks.length) return `<p class="notice">ยังไม่มีแผน</p>`;
+  if (!cm) cm = (sel || today).slice(0, 7);
+  const [y, m] = cm.split("-").map(Number), start = mondayOf(`${cm}-01`);
+  const byDate = {}; weeks.forEach((w) => w.days.forEach((d) => (byDate[d.date] = d.workouts)));
+  const cells = Array.from({ length: 42 }, (_, i) => addDays(start, i)), nrows = cells.slice(35).every((d) => d.slice(0, 7) !== cm) ? 35 : 42;
+  return `<div class="mnav"><button type="button" class="ak-rb" data-act="mon" data-d="-1" aria-label="เดือนก่อน">‹</button><b>${MONTHS[m - 1]} ${y + 543}</b><button type="button" class="ak-rb" data-act="mon" data-d="1" aria-label="เดือนถัดไป">›</button></div>
+    <div class="mcal" role="grid" aria-label="ปฏิทินเดือน ${MONTHS[m - 1]} ${y + 543}">${DAYS.map((d) => `<div class="mh" role="columnheader">${d.replace(".", "")}</div>`).join("")}
+      ${cells.slice(0, nrows).map((ds) => {
+        const ws = byDate[ds] || [], tr = ws.filter((x) => x.sport !== "rest"), k = tr.reduce((s, x) => s + wcalc(x).m, 0) / 1000;
+        const tone = !tr.length ? "" : tr.every((x) => done[x.id]) ? " ok" : tr.every((x) => done[x.id] || skip[x.id]) ? " sk" : ds < today ? " bad" : "";
+        return `<button type="button" class="mc${ds.slice(0, 7) !== cm ? " out" : ""}${ds === today ? " today" : ""}${tone}" ${byDate[ds] ? `data-act="dayjump" data-d="${ds}"` : "disabled"} aria-label="${longDate(ds)}${tr.length ? ` มี ${tr.length} เวิร์คเอาต์` : ""}${tone === " ok" ? " ทำครบ" : tone === " bad" ? " ค้าง" : tone === " sk" ? " ข้าม" : ""}">
+          <span class="mn">${dayNum(ds)}</span><span class="mds">${tr.slice(0, 4).map((x) => `<i class="md s-${x.sport}${done[x.id] ? " on" : skip[x.id] ? " sk" : ""}"></i>`).join("")}</span>${k ? `<span class="mk">${+k.toFixed(0)} กม.</span>` : ""}</button>`;
+      }).join("")}</div>
+    <p class="note" style="margin:.5rem 0 1rem">พื้นเขียว = ทำครบ, พื้นแดง = มีค้าง, พื้นเทา = ข้าม, จุดทึบ = ทำแล้ว, จุดโปร่ง = ยังไม่ทำ</p>
+    <div class="ak-h">รายสัปดาห์</div>
+    ${weeks.map((w, i) => {
+      const st = wkStats(w), mx = Math.max(0.1, ...w.days.map(dayKm));
+      return `<button type="button" class="crow${i === cur ? " now" : ""}${i === wi ? " sel" : ""}" data-act="wkjump" data-i="${i}" aria-label="สัปดาห์ ${w.weekNumber} ${rangeLabel(w.startDate)}">
+      <div class="cw"><b>W${w.weekNumber}</b><span>${rangeLabel(w.startDate)}${w.phase ? `<br>${esc(w.phase)}` : ""}</span></div>
+      <div class="cbars" aria-hidden="true">${w.days.map((d) => { const k = dayKm(d); return k ? `<i style="height:${Math.max(10, Math.round((k / mx) * 100))}%"></i>` : `<i class="r" style="height:10%"></i>`; }).join("")}</div>
+      <div class="cs"><b>${+st.planKm.toFixed(0)}</b> กม.<br>${st.doneN}/${st.n}</div></button>`;
+    }).join("")}`;
+}
+
+/* ---------- ข้อมูลสำหรับกราฟ Fitness / Fatigue / Form ---------- */
+function perfData() {
+  const weeks = plan?.weeks || [], today = TODAY;
+  const all = weeks.flatMap((w) => w.days.flatMap((d) => trainOf(d).map((x) => ({ x, date: d.date })))), dn = all.filter((o) => done[o.x.id]);
+  const dayLoads = {}; dn.forEach((o) => (dayLoads[o.date] = (dayLoads[o.date] || 0) + loadOf(o.x)));
+  const rows = weeks.length && today >= weeks[0].startDate ? Perf.series(dayLoads, weeks[0].startDate, today) : [];
+  return { rows, last: rows[rows.length - 1], n: dn.length };
+}
+const sgn = (v) => (v > 0 ? "+" : "") + Math.round(v);
+
+/* ---------- ระบบหน้าต่างย่อย: เปิดซ้อนกันได้ มีปุ่มย้อนกลับและปิดแบบมีแอนิเมชัน ---------- */
+const MODALS = {};
+let mstack = [], mcur = null, mclosing = false, draft = null;
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* หัวหน้าต่างเดียวกันทุกป๊อปอัป: ชื่อ + คำอธิบายย่อชิดซ้าย ปุ่มปิด/ย้อนกลับเป็นไอคอนวงกลมขาว */
+function xHead(def) {
+  const back = mstack.length ? `<button type="button" class="xci" data-act="mback" aria-label="กลับ">${XI(XP.back)}</button>` : "";
+  return `<div class="xr xs-h"><div class="xrl">${back}<div class="xs-t"><h2 id="dlg-title">${esc(def.title)}</h2>${def.sub ? `<p class="xm">${esc(def.sub)}</p>` : ""}</div></div><button type="button" class="xci" data-act="mclose" aria-label="ปิด">${XI(XP.x)}</button></div>`;
+}
+function paintM(animate, keepScroll) {
+  const def = MODALS[mcur.name](mcur.arg), old = dlg.querySelector(".xs-b"), top = keepScroll && old ? old.scrollTop : 0;
+  dlg.className = "ak-gm xs";
+  dlg.innerHTML = `<div class="ak-md xs${animate ? "" : " still"}${animate ? " pre" : ""}" tabindex="-1" autofocus>${xHead(def)}<div class="xs-b">${def.html}</div></div>`;
+  if (top) dlg.querySelector(".xs-b").scrollTop = top;
+  if (animate) {
+    const el = dlg.querySelector(".ak-md.xs");
+    el.getBoundingClientRect();
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("pre")));
+  }
+  if (def.after) def.after();
+}
+function openM(name, arg) {
+  if (mclosing || !MODALS[name]) return;
+  if (mcur && dlg.open) mstack.push(mcur);
+  mcur = { name, arg };
+  paintM(true);
+  if (!dlg.open) dlg.showModal();
+}
+const refreshM = () => { if (mcur && dlg.open) paintM(false, true); };
+function backM() { if (mclosing || !mstack.length) return; mcur = mstack.pop(); paintM(true); }
+function finishClose() { mclosing = false; dlg.classList.remove("out"); if (dlg.open) dlg.close(); }
+function closeM(now) {
+  if (!dlg.open) { mstack = []; mcur = null; return; }
+  if (now || reduceMotion()) return finishClose();
+  if (mclosing) return;
+  mclosing = true; dlg.classList.add("out"); setTimeout(finishClose, 220);
+}
+dlg.addEventListener("close", () => { mstack = []; mcur = null; mclosing = false; draft = null; dlg.className = ""; });
+dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeM(); });
+
+MODALS.coach = () => {
+  const seen = store.get(msgSeenKey()) || "", list = msgs.slice().sort((a, b) => b.at.localeCompare(a.at));
+  return {
+    title: "ข้อความจากโค้ช",
+    html: list.length ? list.map((m) => `<section class="ak-g ak-msg${m.at > seen ? " new" : ""}"><div class="sx">${msgWhen(m.at)}</div><b>${esc(m.text)}</b></section>`).join("") : `<p class="notice">ยังไม่มีข้อความจากโค้ช</p>`,
+    after: () => { const last = list[0]?.at; if (last && last > seen) { store.set(msgSeenKey(), last); render(); } },
+  };
+};
+MODALS.steps = (id) => {
+  const o = INDEX[id]; if (!o) return { title: "ขั้นตอน", html: `<p class="notice">ไม่พบเวิร์คเอาต์</p>` };
+  const x = o.x, { c, min, m } = wcalc(x), on = !!done[x.id];
+  const rows = (x.steps || []).map((it) => {
+    const rp = it.t === "repeat", pc = rp ? it.work?.p : it.p, cc = Steps.calc([it], paces), lvl = rp || ["steady"].includes(it.t) ? segClass(cc.segs[0] || { ps: 1, type: "work", ref: pc }) : "lv0";
+    const col = (XLV[lvl] || XLV.unk)[0], ttl = rp ? `${+it.n} × ${Steps.amount(it.work)}` : Steps.T[it.t] || "", sub = rp ? (it.rest && +it.rest.x > 0 ? `พัก ${Steps.amount(it.rest)}` : "อินเทอร์วัล") : Steps.amount(it);
+    const pl = Steps.REFS.includes(pc) ? `${XZ[pc]}${paces?.values?.[pc] ? " · " + esc(paceText(paces.values[pc])) : ""}` : pc ? esc(paceText(pc)) : "";
+    return `<div class="xrow"><i style="width:6px;height:34px;border-radius:3px;background:${col}"></i><div style="flex:1"><p style="font-weight:600;font-size:15px">${esc(ttl)}</p><p class="xm">${esc(sub)}</p></div><span style="font-weight:600;font-size:14px">${pl}</span></div>`;
+  }).join("");
+  const exr = (x.exercises || []).map((e) => `<div class="xrow"><div style="flex:1"><p style="font-weight:600;font-size:15px">${esc(e.n)}</p>${e.w ? `<p class="xm">${esc(e.w)}</p>` : ""}</div><span style="font-weight:600;font-size:14px">${esc(Steps.exAmount(e))}</span></div>`).join("");
+  return { title: o.date === TODAY ? "ขั้นตอนวันนี้" : `ขั้นตอน ${shortDate(o.date)}`,
+    html: `<div class="xk"><p class="xm">${longDate(o.date)}</p><h2 style="margin:2px 0 12px">${esc(x.name)}</h2>${c ? xGraph(c.segs) : ""}<div style="margin-top:6px">${rows}${exr}</div>
+      ${x.description || x.humanReadable ? `<p class="xm" style="margin-top:8px">${esc(x.description || x.humanReadable)}</p>` : ""}
+      <div class="xr xm" style="margin-top:6px"><span>${min ? `เวลารวม ${clockMin(min)} ${clockUnit(min)}` : ""}</span><span>${m ? +(m / 1000).toFixed(1) + " กม." : ""}</span></div>${on ? fbLine(fb[x.id]) : ""}</div><button type="button" class="xbtn w" data-act="mclose">ปิด</button>` };
+};
+MODALS.week = (i) => {
+  const weeks = plan.weeks, w = weeks[+i] || weeks[CUR], st = wkStats(w), items = w.days.flatMap((d) => trainOf(d).map((x) => ({ x, date: d.date })));
+  return { title: `แผนสัปดาห์ ${w.weekNumber}`, html: `<div class="segs" style="margin:0 4px 12px" role="img" aria-label="ทำแล้ว ${st.doneN} จาก ${st.n} ครั้ง">${items.map((o) => `<i class="sg s-${o.x.sport}${done[o.x.id] ? " on" : ""}"></i>`).join("")}</div>
+    <section class="ak-g" style="padding:2px 14px">${items.length ? items.map(({ x, date }) => { const { min, m } = wcalc(x), on = !!done[x.id];
+      return `<button type="button" class="ak-wr${on ? " dn" : ""}" data-act="dayjump" data-d="${date}">${shield(x, on)}<span><span class="sx">${DAYS[dowIdx(date)]} ${shortDate(date)}${min ? ` · ${clockMin(min)} ${clockUnit(min)}` : ""}${m ? ` – ${+(m / 1000).toFixed(1)} กม.` : ""}</span><b>${esc(x.name)}</b>${x.humanReadable ? `<em>${esc(x.humanReadable)}</em>` : ""}</span></button>`; }).join("") : `<p class="notice" style="border:0;background:none">สัปดาห์นี้ไม่มีเวิร์คเอาต์</p>`}</section>
+    <button type="button" class="btn primary ak-w" data-act="wkjump" data-i="${weeks.indexOf(w)}">เปิดหน้าแผน</button>` };
+};
+MODALS.fff = () => {
+  const { rows, last, n } = perfData();
+  if (!last || !n) return { title: "Fitness · Fatigue · Form", html: `<p class="notice">ยังไม่มีข้อมูล ติ๊ก "ทำเสร็จแล้ว" และให้คะแนนความเหนื่อยหลังซ้อม กราฟจะขึ้นที่นี่</p>` };
+  const form = Perf.formLabel(last.tsb), leg = (c, t, d) => `<div class="legend-row"><i style="background:${c}"></i><div><b>${t}</b><span class="sx">${d}</span></div></div>`;
+  return { title: "Fitness · Fatigue · Form", html: `<section class="ak-g"><div class="ptiles"><div class="pt"><b>${Math.round(last.ctl)}</b><span>Fitness</span></div><div class="pt"><b>${Math.round(last.atl)}</b><span>Fatigue</span></div><div class="pt"><b>${sgn(last.tsb)}</b><span class="tone ${form.c}">${form.t}</span></div></div>
+      <div style="margin-top:1rem">${Perf.lineChart(rows.slice(-56), [{ k: "ctl", cls: "l-ctl" }, { k: "atl", cls: "l-atl" }, { k: "tsb", cls: "l-tsb" }], { label: `กราฟ Fitness ${Math.round(last.ctl)}, Fatigue ${Math.round(last.atl)}, Form ${sgn(last.tsb)}` })}</div></section>
+    <section class="ak-g" style="padding:4px 14px">${leg("#0099ff", "Fitness", "ความฟิตสะสมจากการซ้อม")}${leg("#e5232d", "Fatigue", "ความล้าช่วงนี้")}${leg("var(--ok)", "Form", "ความพร้อม = Fitness − Fatigue")}</section>
+    <p class="sx" style="margin:0 2px 10px"><b>${form.t}:</b> ${form.d}</p>
+    <p class="sx" style="margin:0 2px 12px">ค่าประมาณจากเวลา × ความเหนื่อยที่ให้หลังซ้อม ไม่ใช่ TSS</p>
+    ${navBtn("m", mBtn("fffinfo"), "170,110,255", "info", "วิธีคำนวณ", "อ่านคำอธิบาย")}` };
+};
+MODALS.fffinfo = () => ({ title: "วิธีคำนวณ", html: `<section class="ak-g"><p style="margin:0">Fitness สะสมช้า ลดช้า (เฉลี่ย 42 วัน) ส่วน Fatigue ขึ้นเร็ว ลดเร็ว (เฉลี่ย 7 วัน) ค่า Form คือส่วนต่างของสองเส้น ยิ่งสูงยิ่งสดพร้อมแข่ง</p>
+  <p class="sx" style="margin:.7rem 0 0">โหลดแต่ละเวิร์คเอาต์ = เวลา (นาที) × ความเหนื่อย (RPE) ÷ ${Perf.LOAD_SCALE} ถ้าไม่ได้ให้คะแนน ใช้ RPE ในแผน (หรือ 5) ยิ่งให้คะแนนครบยิ่งแม่น</p></section><button type="button" class="btn ak-w" data-act="mback">กลับ</button>` });
+MODALS.compare = () => {
+  if (CUR < 1) return { title: "เทียบสัปดาห์ก่อน", html: `<p class="notice">ยังไม่มีสัปดาห์ก่อนหน้าให้เทียบ</p>` };
+  const A = plan.weeks[CUR], B = plan.weeks[CUR - 1], sa = wkStats(A), sb = wkStats(B);
+  const dnOf = (w) => w.days.flatMap((d) => trainOf(d)).filter((x) => done[x.id]);
+  const ma = minOf(dnOf(A)), mb = minOf(dnOf(B));
+  const avg = (w) => { const r = dnOf(w).map((x) => fb[x.id]?.rpe).filter(Boolean); return r.length ? r.reduce((s, v) => s + v, 0) / r.length : 0; };
+  const ra = avg(A), rb = avg(B), dKm = sa.doneKm - sb.doneKm, dMin = ma - mb;
+  const tone = (v) => (v > 0 ? "up" : v < 0 ? "dn2" : "");
+  const kmTxt = sb.doneKm > 0 ? `${sgn((dKm / sb.doneKm) * 100)}%` : `${dKm > 0 ? "+" : ""}${+dKm.toFixed(1)} กม.`;
+  const row = (t, sub, v, cls = "") => `<div class="ln"><span>${t}<span class="sx" style="display:block">${sub}</span></span><b class="${cls}">${v}</b></div>`;
+  return { title: "เทียบสัปดาห์ก่อน", html: `<p class="sx" style="text-align:center;margin:-4px 0 12px">สัปดาห์ ${A.weekNumber} เทียบสัปดาห์ ${B.weekNumber}</p>
+    <section class="ak-g ak-cmp" style="padding:4px 14px">
+      ${row("ระยะทาง", `${+sa.doneKm.toFixed(1)} กม. เทียบ ${+sb.doneKm.toFixed(1)} กม.`, kmTxt, tone(dKm))}
+      ${row("เวลาซ้อม", `${fmtHM(ma)} เทียบ ${fmtHM(mb)} ชม.`, `${dMin < 0 ? "−" : "+"}${fmtHM(Math.abs(dMin))} ชม.`, tone(dMin))}
+      ${row("ความเหนื่อยเฉลี่ย", rb ? `สัปดาห์ก่อน ${rb.toFixed(1)}` : "สัปดาห์ก่อนยังไม่มีคะแนน", ra ? ra.toFixed(1) : "–")}
+      ${row("ทำตามแผน", `สัปดาห์ก่อน ${sb.doneN}/${sb.n} ครั้ง`, `${sa.doneN}/${sa.n} ครั้ง`)}</section>` };
+};
+MODALS.pace = () => ({ title: "เพซของฉัน", sub: paces?.updatedAt ? "โค้ชอัปเดต " + shortDate(paces.updatedAt.slice(0, 10)) : "", html: `<div class="xk pace-flat">${paceRows().replace(/<p class="sx" style="margin:-4px 0 12px[^>]*>[^<]*<\/p>/, "")}</div>` });
+MODALS.backup = () => ({ title: "สำรองแผน", html: `<section class="ak-g"><p class="sx" style="margin-top:0">บันทึกแผน ประวัติที่ติ๊กทำแล้ว และความรู้สึกหลังซ้อมไว้ในเครื่องของคุณ</p><button type="button" class="btn primary ak-w" data-act="backup">ดาวน์โหลดไฟล์สำรอง</button></section>` });
+MODALS.cal = () => ({ title: "ปฏิทิน", html: calHtml(plan?.weeks || [], CUR, TODAY) });
+
+/* ---------- ฟอร์มความรู้สึกหลังซ้อม ---------- */
+const FEELS = [["สบาย", "เบามาก ฟื้นตัวง่าย"], ["พอดี", "คุยได้ตลอด"], ["เริ่มหนัก", "คุยได้เป็นช่วงๆ"], ["หนัก", "พูดได้ไม่กี่คำ"], ["สุดแรง", "แทบไม่ไหว"]];
+const AREAS = ["ไม่มี", "น่อง", "เข่า", "หน้าแข้ง", "ต้นขา", "อื่นๆ"];
+function openFb(id, edit) {
+  const o = findW(id); if (!o) return;
+  const f = fb[id] || {};
+  draft = { id, edit, rpe: f.rpe || 0, feel: f.feel || 0, area: f.pain ? f.area || "อื่นๆ" : "", km: f.km || "", min: f.min || "", note: f.note || "", hr: f.hr || 0 };
+  mstack = []; mcur = null;
+  openM("fb", id);
+}
+MODALS.fb = (id) => {
+  const o = findW(id);
+  return { title: "ซ้อมเป็นอย่างไรบ้าง", sub: o?.name || "",
+    html: `<div class="ak-h">วันนี้ซ้อมรู้สึกอย่างไร<b id="rpe-l"></b></div>
+      <div class="ak-fg" role="group" aria-label="ความรู้สึกหลังซ้อม">${FEELS.map(([t], i) => `<button type="button" class="ak-fp c${i + 1}" data-act="rpe" data-v="${i * 2 + 2}" aria-pressed="false"><b>${t}</b><span class="lv" aria-hidden="true">${"<s></s>".repeat(5)}</span></button>`).join("")}</div>
+      <div class="ak-h">มีอาการเจ็บ?</div>
+      <div class="ak-cxr wrap" role="group" aria-label="ตำแหน่งที่เจ็บ">${AREAS.map((a, i) => `<button type="button" class="ak-cx" data-act="area" data-v="${i ? a : ""}" aria-pressed="false">${a}</button>`).join("")}</div>
+      <details class="fb-more"${draft && (draft.km || draft.min || draft.note || draft.hr) ? " open" : ""}><summary>รายละเอียดเพิ่มเติม <span class="sx">ดึงจาก COROS · ระยะ/เวลาจริง · โน้ตถึงโค้ช</span></summary>
+      ${coBox("fb", true)}
+      <div class="ak-h">ผลจริง (ไม่บังคับ)</div>
+      <div class="ak-two"><label class="ak-fld"><span class="sx">ระยะที่วิ่งจริง (กม.)</span><input id="fb-km" type="number" inputmode="decimal" step="0.01" min="0" max="500" value="${draft?.km || ""}" placeholder="${o ? +(wcalc(o).m / 1000).toFixed(1) || "" : ""}"></label><label class="ak-fld"><span class="sx">เวลาจริง (นาที:วินาที)</span><input id="fb-min" type="text" inputmode="numeric" autocomplete="off" maxlength="8" value="${draft?.min ? fmtT(draft.min) : ""}" placeholder="${o ? fmtT(wcalc(o).min) || "" : ""}"></label></div>
+      <label class="ak-h" for="fb-note" style="display:block">บันทึกถึงโค้ช (ไม่บังคับ)</label>
+      <textarea id="fb-note" rows="3" maxlength="300" placeholder="เช่น ขาซ้ายตึงช่วง 3 กม.สุดท้าย นอนน้อย">${esc(draft?.note || "")}</textarea>
+      </details>
+      <div class="ak-foot">${draft?.edit ? `<button type="button" class="btn" data-act="fbundo">ยกเลิกการติ๊ก</button>` : `<button type="button" class="btn" data-act="fbskip">ข้าม</button>`}<button type="button" class="btn primary" data-act="fbsave">บันทึก</button></div>`,
+    after: () => { paintFb(); } };
+};
+function paintFb() {
+  if (!draft) return;
+  const lv = draft.rpe ? Math.ceil(draft.rpe / 2) : 0;
+  dlg.querySelectorAll('[data-act="rpe"]').forEach((b) => { const on = +b.dataset.v / 2 === lv; b.setAttribute("aria-pressed", String(on)); b.classList.toggle("on", on); const k = +b.dataset.v / 2; b.querySelectorAll("s").forEach((e, i) => e.classList.toggle("a", i < k)); });
+  dlg.querySelectorAll('[data-act="feel"]').forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.v === draft.feel)));
+  dlg.querySelectorAll('[data-act="area"]').forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === draft.area)));
+  const r = dlg.querySelector("#rpe-l"), f = dlg.querySelector("#feel-l");
+  if (r) r.textContent = lv ? FEELS[lv - 1][1] : "";
+  if (f) f.textContent = draft.feel ? FEEL_L[draft.feel] : "";
+}
+
+function fbLine(f) {
+  if (!f) return "";
+  const bits = [f.km || f.min ? `วิ่งจริง ${[f.km ? +f.km + " กม." : "", f.min ? fmtT(f.min) + (f.min >= 60 ? " ชม." : " นาที") : ""].filter(Boolean).join(" · ")}` : "", f.rpe ? `เหนื่อย ${f.rpe}/10` : "", f.feel ? `รู้สึก${FEEL_L[f.feel]}` : "", f.pain ? `มีอาการเจ็บ${f.area ? ` (${f.area})` : ""}` : ""].filter(Boolean);
+  return `<div class="fbline">${esc(bits.join(", "))}${f.note ? `<p class="wtx" style="margin-top:.3rem">"${esc(f.note)}"</p>` : ""}</div>`;
+}
+
+// on=true พร้อมความรู้สึก (fbObj) หรือ fbObj=undefined (ไม่ส่ง = ไม่แตะของเดิม)  on=false = ยกเลิก (ลบความรู้สึกด้วย)
+function syncOwnPost(id) {
+  feed = feed.filter((p) => p.id !== "me:" + id);
+  const f = fb[id], o = INDEX[id];
+  if (done[id] && f?.rpe && o && !profile?.feedOff) feed.unshift({ id: "me:" + id, aid: "me", me: true, name: me, sport: o.x.sport, title: o.x.name, km: f.km || +(wcalc(o.x).m / 1000).toFixed(2), min: f.min || wcalc(o.x).min, rpe: f.rpe, feel: f.feel, at: f.at, date: o.date });
+}
+/* คิวส่งผลซ้อมตอนไม่มีเน็ต: เก็บในเครื่อง แล้วส่งให้เองเมื่อกลับมาออนไลน์ (รายการล่าสุดของแต่ละเวิร์คเอาต์เท่านั้น) */
+const qKey = () => "rp_q:" + me;
+const qGet = () => { try { return JSON.parse(store.get(qKey()) || "[]"); } catch { return []; } };
+const qPush = (body) => { const q = qGet().filter((x) => x.workoutId !== body.workoutId); q.push(body); try { store.set(qKey(), JSON.stringify(q.slice(-40))); } catch {} };
+function qApply() { for (const it of qGet()) { if ("skip" in it && !("done" in it)) { it.skip ? (skip[it.workoutId] = 1) : delete skip[it.workoutId]; } else if (it.done) { done[it.workoutId] = 1; delete skip[it.workoutId]; if (it.fb) fb[it.workoutId] = { ...it.fb, at: new Date().toISOString() }; } else { delete done[it.workoutId]; delete fb[it.workoutId]; } } }
+let flushing = false;
+async function flushQ() {
+  if (demo || !token || flushing) return; const q = qGet(); if (!q.length) return; flushing = true;
+  const rest = []; for (const it of q) { try { await call("/api/done", { method: "POST", body: JSON.stringify(it) }); } catch (e) { if (!e.status || e.status >= 500) rest.push(it); } }
+  try { store.set(qKey(), JSON.stringify(rest)); } catch {} flushing = false;
+  if (rest.length < q.length && !offline) loadFeed(true);
+}
+window.addEventListener("online", async () => { await flushQ(); if (offline) load(); else loadFeed(true); });
+function toast(msg, act) { // ข้อความสั้น ๆ ลอยเหนือแถบเมนู act = [ชนิดปุ่ม, โมดอล, ค่า, ข้อความปุ่ม]
+  document.querySelector(".toast")?.remove(); const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status");
+  t.innerHTML = `<span>${esc(msg)}</span>${act ? `<button type="button" data-act="${act[0]}" data-m="${act[1]}" data-v="${esc(act[2])}">${esc(act[3])}</button>` : ""}`;
+  document.body.appendChild(t); t.addEventListener("click", () => t.remove()); clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 280); }, 6500);
+}
+async function setSkip(id, on) {
+  const y = scrollY, prev = !!skip[id]; if (on) moFresh();
+  on ? (skip[id] = 1) : delete skip[id];
+  render(); scrollTo(0, y);
+  if (demo) return;
+  const body = { workoutId: id, skip: on };
+  if (offline) { qPush(body); return toast("ออฟไลน์ บันทึกไว้ในเครื่องแล้ว จะส่งให้เมื่อมีเน็ต"); }
+  try { await call("/api/done", { method: "POST", body: JSON.stringify(body) }); flushQ(); }
+  catch (e) {
+    if (!e.status || e.status >= 500) { qPush(body); return toast("เน็ตหรือระบบไม่พร้อม บันทึกไว้ในเครื่องแล้ว จะส่งให้อัตโนมัติ"); }
+    prev ? (skip[id] = 1) : delete skip[id]; render(); scrollTo(0, y); alert("บันทึกไม่สำเร็จ: " + e.message);
+  }
+}
+async function setDone(id, on, fbObj) {
+  if (on) moFresh();
+  const y = scrollY, prevDone = !!done[id], prevFb = fb[id], prevSkip = !!skip[id];
+  if (on) { done[id] = 1; delete skip[id]; if (fbObj !== undefined) fbObj && (fbObj.rpe || fbObj.feel || fbObj.pain || fbObj.note || fbObj.km || fbObj.min) ? (fb[id] = { ...fbObj, at: new Date().toISOString() }) : delete fb[id]; }
+  else { delete done[id]; delete fb[id]; }
+  if (demo) syncOwnPost(id);
+  render(); scrollTo(0, y);
+  if (demo) return;
+  const body = { workoutId: id, done: on, ...(on && fbObj !== undefined ? { fb: fbObj } : {}) };
+  if (offline) { qPush(body); return toast("ออฟไลน์ บันทึกไว้ในเครื่องแล้ว จะส่งให้เมื่อมีเน็ต"); }
+  try { await call("/api/done", { method: "POST", body: JSON.stringify(body) }); loadFeed(true); flushQ(); }
+  catch (e) {
+    if (!e.status || e.status >= 500) { qPush(body); return toast("เน็ตหรือระบบไม่พร้อม บันทึกไว้ในเครื่องแล้ว จะส่งให้อัตโนมัติ"); }
+    prevDone ? (done[id] = 1) : delete done[id]; prevFb ? (fb[id] = prevFb) : delete fb[id]; prevSkip ? (skip[id] = 1) : delete skip[id];
+    render(); scrollTo(0, y); alert("บันทึกไม่สำเร็จ: " + e.message);
+  }
+}
+
+/* ---------- สำรองแผนของตัวเอง ---------- */
+function backupMine() {
+  if (!plan) return;
+  downloadJSON({ app: "k4rc-training-plan", kind: "athlete-backup", exportedAt: new Date().toISOString(), athlete: me, meta: plan.meta, weeks: plan.weeks, done, skip },
+    `k4rc-my-plan-${todayStr()}.json`);
+}
+
+/* ---------- ค่าจริงที่นักกีฬากรอก (ถ้าไม่กรอก ใช้ค่าตามแผน) ---------- */
+const kmOf = (x) => fb[x.id]?.km || wcalc(x).m / 1000;
+const minOfX = (x) => fb[x.id]?.min || wcalc(x).min;
+const fmtT = (min) => { const t = Math.round(min * 60), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60; return h ? `${h}:${pad(m)}${s ? ":" + pad(s) : ""}` : s ? `${m}:${pad(s)}` : String(m); };
+// ช่องเวลา: พิมพ์ตัวเลขอย่างเดียวก็ได้ ระบบใส่ ":" ให้ (3800 -> 38:00, 10530 -> 1:05:30) หรือพิมพ์ 38 = 38 นาที
+const maskTime = (s) => { const d = s.replace(/\D/g, "").slice(0, 6); return d.length <= 2 ? d : d.length <= 4 ? d.slice(0, -2) + ":" + d.slice(-2) : d.slice(0, -4) + ":" + d.slice(-4, -2) + ":" + d.slice(-2); };
+document.addEventListener("input", (e) => { const t = e.target; if (t?.id !== "fb-min") return; const v = t.value; t.value = e.inputType === "deleteContentBackward" ? v.replace(/[^\d:]/g, "") : maskTime(v); });
+const parseT = (s) => { s = String(s || "").trim(); if (!s) return 0; if (s.includes(":")) { const p = s.split(":").map(Number); if (p.length > 3 || p.some((n) => !Number.isFinite(n) || n < 0)) return 0; const [h, m, sec] = p.length === 3 ? p : [0, p[0], p[1] || 0]; return sec > 59 || (p.length === 3 && m > 59) ? 0 : h * 60 + m + sec / 60; } const n = +s; return Number.isFinite(n) && n > 0 ? n : 0; };
+const clockStr = (min) => { const t = Math.round(min * 60), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60; return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`; };
+const fmtPace = (p) => { const t = Math.round(p * 60); return `${Math.floor(t / 60)}:${pad(t % 60)}`; };
+IC.share = "M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5";
+IC.user = "M12 12a4 4 0 100-8 4 4 0 000 8zM4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5";
+
+/* ---------- แชร์เวิร์คเอาต์เป็นภาพ (วาดบน canvas ในเครื่อง ไม่อัปโหลดรูป) ---------- */
+const SH = { id: null, ratio: "story", style: 0, photo: null, zoom: 1, ox: 0, oy: 0, show: { dist: 1, time: 1, pace: 1, rpe: 0, name: 1, date: 1, graph: 1, route: 0, hr: 0 }, over: { km: "", min: "" } };
+const SHR = { story: [1080, 1920], post: [1080, 1350] };
+const SH_STYLES = ["สตอรี่", "ตัวเลขใหญ่", "การ์ดกระจก"];
+const SH_TOG = [["dist", "ระยะ"], ["time", "เวลา"], ["pace", "เพซ"], ["rpe", "ความเหนื่อย"], ["name", "ชื่อ"], ["date", "วันที่"], ["graph", "กราฟ"], ["route", "เส้นทาง"], ["hr", "HR"]];
+function shareData(id) {
+  const o = INDEX[id]; if (!o) return null;
+  const f = fb[id] || {}, pl = wcalc(o.x), ok = +SH.over.km || 0, om = parseT(SH.over.min);
+  const km = ok || f.km || (pl.m ? pl.m / 1000 : 0), min = om || f.min || pl.min || 0;
+  return { x: o.x, date: o.date, km, min, pace: km >= 0.5 && min ? min / km : 0, rpe: f.rpe || 0, real: !!(ok || om || f.km || f.min) };
+}
+function shStats(d) {
+  const a = [];
+  if (SH.show.dist && d.km) a.push(["ระยะทาง", String(+d.km.toFixed(2)), "กม."]);
+  if (SH.show.time && d.min) a.push(["เวลา", fmtT(d.min), d.min >= 60 ? "ชม." : "นาที"]);
+  if (SH.show.pace && d.pace) a.push(["เพซเฉลี่ย", fmtPace(d.pace), "/กม."]);
+  if (SH.show.rpe && d.rpe) a.push(["ความเหนื่อย", String(d.rpe), "/10"]);
+  return a;
+}
+const photoDims = (W, H) => { const p = SH.photo, sc = Math.max(W / (p.naturalWidth || p.width), H / (p.naturalHeight || p.height)) * SH.zoom; return { dw: (p.naturalWidth || p.width) * sc, dh: (p.naturalHeight || p.height) * sc }; };
+function clampPhoto(W, H) { const { dw, dh } = photoDims(W, H), mx = Math.max(0, (dw - W) / 2), my = Math.max(0, (dh - H) / 2); SH.ox = Math.max(-mx, Math.min(mx, SH.ox)); SH.oy = Math.max(-my, Math.min(my, SH.oy)); }
+const fitText = (c, t, maxW) => { if (c.measureText(t).width <= maxW) return t; while (t.length > 1 && c.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; };
+function rrect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+const SH_LOGO = new Image(); SH_LOGO.onload = () => { const cv = dlg.querySelector("#shc"); if (cv) drawShare(cv); }; SH_LOGO.src = "icons/logo-white.png";
+const hasGraph = (id) => !!INDEX[id] && !!wcalc(INDEX[id].x).c?.segs?.length;
+const SEGCOL = { lv0: "#4f8fb5", lv1: "#ffc145", lv2: "#ff5a2a", rest: "rgba(255,255,255,.3)", unk: "rgba(255,255,255,.35)" };
+function drawGraph(c, segs, x, bottom, w, h) {
+  const wt = (s) => Math.max(1, s.sec ?? (s.m ? (s.m / 1000) * 360 : 60)), gap = 6, tot = segs.reduce((a, s) => a + wt(s), 0), room = w - gap * (segs.length - 1);
+  let ws = segs.map((s) => Math.max(6, (room * wt(s)) / tot)); const sum = ws.reduce((a, v) => a + v, 0) + gap * (segs.length - 1); if (sum > w) ws = ws.map((v) => (v * (w - gap * (segs.length - 1))) / (sum - gap * (segs.length - 1)));
+  const prev = c.shadowBlur; c.shadowBlur = 0; let cx = x;
+  segs.forEach((s, i) => { const sh = (h * segHeight(s)) / 100; c.fillStyle = SEGCOL[segClass(s)] || SEGCOL.lv2; rrect(c, cx, bottom - sh, ws[i], sh, Math.min(10, ws[i] / 2)); c.fill(); cx += ws[i] + gap; });
+  c.shadowBlur = prev;
+}
+function drawShare(cv) {
+  if (!cv || !cv.getContext) return;
+  const [W, H] = SHR[SH.ratio]; if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const c = cv.getContext("2d"), d = shareData(SH.id); if (!c || !d) return;
+  const SANS = "'Plus Jakarta Sans', Prompt, sans-serif", MONO = "'Roboto Mono', Prompt, monospace", NUMF = "Orbitron, 'Roboto Mono', monospace", P = 72;
+  // ตัวเลขสไตล์สปอร์ต: ฟอนต์ Orbitron Black กว้าง มุมตัด + เอียงขวา + หนาขึ้นเล็กน้อย
+  const TRK = 0.06; // ระยะห่างตัวอักษร (เพิ่มให้ตัวเลขหนาๆ ไม่ชนกัน)
+  const nw = (t, px) => { c.font = `900 ${px}px ${NUMF}`; return [...t].reduce((a, ch) => a + c.measureText(ch).width + px * TRK, 0) - px * TRK; };
+  const num = (t, x, y, px, align = "left") => { const w = nw(t, px); let cx = align === "center" ? -w / 2 : align === "right" ? -w : 0; c.save(); c.translate(x, y); c.transform(1, 0, -0.2, 1, 0, 0); c.font = `900 ${px}px ${NUMF}`; c.textAlign = "left"; c.fillStyle = "#fff"; [...t].forEach((ch) => { c.fillText(ch, cx, 0); cx += c.measureText(ch).width + px * TRK; }); c.restore(); };
+  c.clearRect(0, 0, W, H); c.textBaseline = "alphabetic"; c.shadowBlur = 0;
+  if (SH.photo) {
+    clampPhoto(W, H); const { dw, dh } = photoDims(W, H);
+    c.fillStyle = "#000"; c.fillRect(0, 0, W, H); c.drawImage(SH.photo, (W - dw) / 2 + SH.ox, (H - dh) / 2 + SH.oy, dw, dh);
+  } else {
+    c.fillStyle = "#12060c"; c.fillRect(0, 0, W, H);
+    [[0, 0, W * 1.1, "235,40,50", .75], [W, H, W * 1.25, "255,110,20", .7], [W, H * .25, W * .8, "120,60,220", .4]].forEach(([x, y, r, rgb, a]) => {
+      const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    });
+  }
+  let g = c.createLinearGradient(0, H * (SH.style === 1 ? .3 : .42), 0, H); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${SH.photo ? .8 : .4})`); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  if (SH.photo) { g = c.createLinearGradient(0, 0, 0, H * .24); g.addColorStop(0, "rgba(0,0,0,.5)"); g.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = g; c.fillRect(0, 0, W, H * .24); }
+  c.shadowColor = "rgba(0,0,0,.55)"; c.shadowBlur = SH.photo ? 22 : 0;
+  // โลโก้ + หัวเรื่อง
+  if (SH_LOGO.complete && SH_LOGO.naturalWidth) c.drawImage(SH_LOGO, W - P - 150, P - 10, 150, 150);
+  else { c.textAlign = "right"; c.fillStyle = "#fff"; c.font = `700 46px ${MONO}`; c.fillText("K4RC", W - P, P + 44); }
+  c.textAlign = "left"; let ty = P + 50;
+  if (SH.show.name) {
+    c.font = `700 62px ${SANS}`; c.fillStyle = "#fff"; c.fillText(fitText(c, d.x.name, W - P * 2 - 190), P, ty); ty += 56;
+    c.font = `500 36px ${SANS}`; c.fillStyle = "rgba(255,255,255,.85)"; c.fillText(me, P, ty); ty += 50;
+  }
+  if (SH.show.date) { c.font = `500 36px ${SANS}`; c.fillStyle = "rgba(255,255,255,.85)"; c.fillText(longDate(d.date), P, ty); }
+  const st = shStats(d), n = st.length, segs = SH.show.graph ? wcalc(d.x).c?.segs : null, GH = SH.ratio === "post" && n >= 4 ? 84 : 120;
+  { // เส้นทาง (เล็ก) + HR ใต้เส้นทาง: แบบแถว = ซ้ายเหนือตัวเลข, ตัวเลขใหญ่ = ใต้ระยะทาง กลางภาพ, การ์ดกระจก = กลางภาพเหนือการ์ด
+    const st0 = SH.style, F = { SANS, NUMF, num, nw };
+    if (st0 === 1 && n) {
+      const y = H * (SH.ratio === "story" ? 0.56 : 0.58), restTop = n > 1 ? H - P - 60 - 76 - 34 : H - P - 80, gT = segs?.length ? (n > 1 ? H - P - 190 - GH : H - P - 80 - GH) : Infinity;
+      drawMedia(c, W, H, P, { mode: "top", y: y + 62 + 40, maxBottom: Math.min(restTop, gT) - 16, center: true }, F);
+    } else {
+      const gTop = (b) => b - GH, base = H - P - 20 - (n - 1) * 168 - 98;
+      let lim = st0 === 0 ? (segs?.length ? gTop(base - 70) - 20 : base - 44) : (segs?.length ? gTop(H - 48 - 236 - 40) - 20 : H - 48 - 236 - 30);
+      if (!n) lim = H - P - 40 - (segs?.length ? GH + 30 : 0);
+      drawMedia(c, W, H, P, { mode: "bottom", y: lim, minTop: ty + 56, center: st0 === 2 }, F);
+    }
+  }
+  if (!n) { if (segs?.length) drawGraph(c, segs, P, H - P - 40, W - P * 2, GH); return; }
+  if (SH.style === 0) {
+    st.forEach((s, i) => {
+      const y = H - P - 20 - (n - 1 - i) * 168;
+      c.textAlign = "left"; c.font = `500 28px ${SANS}`; c.fillStyle = "rgba(255,255,255,.8)"; c.fillText(s[0], P, y - 98);
+      const w = nw(s[1], 100); num(s[1], P, y, 100);
+      c.textAlign = "left"; c.font = `600 36px ${SANS}`; c.fillStyle = "rgba(255,255,255,.88)"; c.fillText(s[2], P + w + 24, y);
+    });
+    if (segs?.length) drawGraph(c, segs, P, H - P - 20 - (n - 1) * 168 - 98 - 70, W - P * 2, GH);
+  } else if (SH.style === 1) {
+    const m = st[0], y = H * (SH.ratio === "story" ? .56 : .58); c.textAlign = "center";
+    c.font = `500 32px ${SANS}`; c.fillStyle = "rgba(255,255,255,.85)"; c.fillText(m[0], W / 2, y - 190);
+    let fs = 210; while (nw(m[1], fs) > W - P * 2 - 60 && fs > 100) fs -= 10;
+    num(m[1], W / 2, y, fs, "center"); c.font = `600 44px ${SANS}`; c.fillStyle = "rgba(255,255,255,.9)"; c.fillText(m[2], W / 2, y + 62);
+    const rest = st.slice(1), cw = (W - P * 2) / Math.max(rest.length, 1);
+    rest.forEach((s, i) => {
+      const x = P + cw * i + cw / 2, yy = H - P - 60; c.font = `500 26px ${SANS}`; c.fillStyle = "rgba(255,255,255,.8)"; c.fillText(s[0], x, yy - 76);
+      num(s[1], x, yy, 62, "center"); c.font = `600 28px ${SANS}`; c.fillStyle = "#fff"; c.fillText(s[2], x, yy + 40);
+    });
+    if (segs?.length) drawGraph(c, segs, P, rest.length ? H - P - 190 : H - P - 80, W - P * 2, GH);
+  } else {
+    const ch = 236, cx = 48, cy = H - 48 - ch, cw = W - 96; c.shadowBlur = 0;
+    rrect(c, cx, cy, cw, ch, 44); c.fillStyle = "rgba(20,10,24,.5)"; c.fill(); c.strokeStyle = "rgba(255,255,255,.4)"; c.lineWidth = 2; c.stroke();
+    const col = cw / n; c.textAlign = "center";
+    st.forEach((s, i) => {
+      const x = cx + col * i + col / 2; c.font = `500 25px ${SANS}`; c.fillStyle = "rgba(255,255,255,.8)"; c.fillText(s[0], x, cy + 64);
+      let fs = n >= 4 ? 52 : n === 3 ? 66 : 84; while (nw(s[1], fs) > col - 36 && fs > 40) fs -= 4;
+      num(s[1], x, cy + 150, fs, "center"); c.font = `600 27px ${SANS}`; c.fillStyle = "rgba(255,255,255,.88)"; c.fillText(s[2], x, cy + 198);
+    });
+    if (segs?.length) drawGraph(c, segs, 48 + 24, cy - 40, W - 96 - 48, GH);
+  }
+}
+/* ---------- ข้อมูลจากลิงก์ COROS: ระยะ เวลา HR เฉลี่ย + รูปเส้นทาง (เก็บในเครื่องนี้เท่านั้น เพราะรูปเส้นทางบอกที่อยู่) ---------- */
+const trkKey = () => "rp_trk:" + me;
+const trkAll = () => { try { return JSON.parse(store.get(trkKey()) || "{}"); } catch { return {}; } };
+const trkGet = (id) => trkAll()[id] || null;
+function trkSet(id, t) { const all = trkAll(); delete all[id]; all[id] = t; const ks = Object.keys(all); while (ks.length > 12) delete all[ks.shift()]; for (;;) { try { store.set(trkKey(), JSON.stringify(all)); return; } catch { const k = Object.keys(all)[0]; if (!k || k === id) return; delete all[k]; } } }
+const trkHr = (id) => (trkGet(id) || {}).avg || (fb[id] || {}).hr || 0;
+const trkRt = (id) => (trkGet(id) || {}).rt || null;
+
+/* แยก "เฉพาะเส้นเส้นทาง" ออกจากรูปแผนที่ของ COROS (เส้นสีเหลืองเขียวบนแผนที่เข้ม) ทิ้งแผนที่/ถนน/ตัวหนังสือ
+   เก็บเป็นรูปหน้ากากเส้นสีขาวโปร่งใสที่ครอปแล้ว + ตำแหน่งจุดเริ่ม/จบ + ความหนาเส้นโดยประมาณ */
+function routeFromMap(url) {
+  return new Promise((res) => {
+    const im = new Image();
+    im.onerror = () => res(null);
+    im.onload = () => {
+      const k = Math.min(1, 1400 / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
+      const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(im, 0, 0, w, h);
+      let d; try { d = x.getImageData(0, 0, w, h).data; } catch { return res(null); }
+      const A = new Float32Array(w * h), G = [0, 0, 0], Rd = [0, 0, 0], cl = (v) => Math.max(0, Math.min(1, v));
+      let tot = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+      for (let i = 0, q = 0; q < w * h; i += 4, q++) {
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx, sat = mx ? (mx - mn) / mx : 0;
+        let hue = 0; if (mx !== mn) { const dd = mx - mn; hue = mx === r ? ((g - b) / dd + 6) % 6 : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4; hue *= 60; }
+        const px = q % w, py = (q / w) | 0;
+        if (hue >= 48 && hue <= 98 && sat > 0.3 && v > 0.28) { // เส้นสีเหลือง-เหลืองเขียว (รวมขอบที่เบลอ)
+          const a = cl((sat - 0.3) / 0.25) * cl((v - 0.28) / 0.3); if (a > 0.04) { A[q] = a; tot += a; if (a > 0.3) { if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; } }
+        } else if (hue >= 100 && hue <= 165 && sat > 0.45 && v > 0.45) { G[0] += px; G[1] += py; G[2]++; }
+        else if ((hue <= 14 || hue >= 346) && sat > 0.5 && v > 0.45) { Rd[0] += px; Rd[1] += py; Rd[2]++; }
+      }
+      if (tot < 120 || x1 <= x0 || y1 <= y0) return res(null);
+      let tv = 0; for (let py = y0; py <= y1; py++) for (let px = x0; px <= x1; px++) { const q = py * w + px; tv += Math.abs(A[q] - A[q + 1]) + Math.abs(A[q] - A[q + w]); }
+      const pad = 8, cx0 = Math.max(0, x0 - pad), cy0 = Math.max(0, y0 - pad), cw = Math.min(w, x1 + pad + 1) - cx0, ch = Math.min(h, y1 + pad + 1) - cy0;
+      const o = document.createElement("canvas"); o.width = cw; o.height = ch; const ox = o.getContext("2d"), od = ox.createImageData(cw, ch);
+      for (let py = 0; py < ch; py++) for (let px = 0; px < cw; px++) { const a = A[(py + cy0) * w + px + cx0]; if (a > 0.04) { const j = (py * cw + px) * 4; od.data[j] = od.data[j + 1] = od.data[j + 2] = 255; od.data[j + 3] = Math.round(a * 255); } }
+      ox.putImageData(od, 0, 0);
+      const mk = (S) => (S[2] >= 25 ? [Math.round(S[0] / S[2] - cx0), Math.round(S[1] / S[2] - cy0)] : null);
+      res({ u: o.toDataURL("image/png"), w: cw, h: ch, t: Math.max(1.5, (2 * tot) / Math.max(tv, 1)), s: mk(G), e: mk(Rd), rs: G[2] >= 25 ? Math.sqrt(G[2] / Math.PI) : 0, re: Rd[2] >= 25 ? Math.sqrt(Rd[2] / Math.PI) : 0 });
+    };
+    im.src = url;
+  });
+}
+const rtImgs = {}, rtDone = {};
+function morph(a, w, h, r, grow) { // ย่อ/ขยายรูปทรง (ตัวกรองสี่เหลี่ยมแยกแกน) ใช้ปรับความหนาเส้นให้พอดี
+  if (!r) return a; const t = new Uint8Array(a.length), o = new Uint8Array(a.length);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = grow ? 0 : 255; for (let k = -r; k <= r; k++) { const xx = x + k; const q = xx < 0 || xx >= w ? 0 : a[y * w + xx]; v = grow ? Math.max(v, q) : Math.min(v, q); } t[y * w + x] = v; }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = grow ? 0 : 255; for (let k = -r; k <= r; k++) { const yy = y + k; const q = yy < 0 || yy >= h ? 0 : t[yy * w + x]; v = grow ? Math.max(v, q) : Math.min(v, q); } o[y * w + x] = v; }
+  return o;
+}
+function blurA(a, w, h, r) { // เบลอช่องอัลฟาให้ขอบเนียน
+  let src = Float32Array.from(a), tmp = new Float32Array(a.length); const n = r * 2 + 1;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) { let s = 0; for (let k = -r; k <= r; k++) s += src[y * w + Math.min(w - 1, Math.max(0, k))]; for (let x = 0; x < w; x++) { tmp[y * w + x] = s / n; s += src[y * w + Math.min(w - 1, x + r + 1)] - src[y * w + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let s = 0; for (let k = -r; k <= r; k++) s += tmp[Math.min(h - 1, Math.max(0, k)) * w + x]; for (let y = 0; y < h; y++) { src[y * w + x] = s / n; s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+  }
+  return src;
+}
+// สร้างภาพเส้นเส้นทางที่เรนเดอร์แล้ว (ไล่สีขาว→ชมพู) ขนาดพอดีกล่อง bw×bh ความหนาเส้นประมาณ want px
+const rlCache = {};
+function routeLine(rt, bw, bh, want) {
+  let im = rtImgs[rt.u]; if (!im) { im = rtImgs[rt.u] = new Image(); im.onload = () => { rtDone[rt.u] = 1; const cv = dlg.querySelector("#shc"); if (cv) drawShare(cv); }; im.src = rt.u; }
+  if (!rtDone[rt.u]) return null;
+  const key = `${rt.u.length}:${rt.w}x${rt.h}:${Math.round(bw)}x${Math.round(bh)}:${want}`; if (rlCache[key]) return rlCache[key];
+  const pad = Math.ceil(want * 1.2), k = Math.min((bw - pad * 2) / rt.w, (bh - pad * 2) / rt.h), dw = Math.max(2, Math.round(rt.w * k)), dh = Math.max(2, Math.round(rt.h * k));
+  // 1) ปรับความหนาเส้นที่ความละเอียดต้นฉบับ (กันเส้นบางจนขาดตอนย่อรูป)
+  const sc = document.createElement("canvas"); sc.width = rt.w; sc.height = rt.h; const sx = sc.getContext("2d", { willReadFrequently: true }); sx.drawImage(im, 0, 0);
+  const sd = sx.getImageData(0, 0, rt.w, rt.h); let a = new Uint8Array(rt.w * rt.h); for (let q = 0; q < a.length; q++) a[q] = sd.data[q * 4 + 3] > 100 ? 255 : 0;
+  const rsrc = Math.round((want / k - rt.t) / 2); a = rsrc > 0 ? morph(a, rt.w, rt.h, Math.min(rsrc, 24), true) : rsrc < 0 ? morph(a, rt.w, rt.h, Math.min(-rsrc, 24), false) : a;
+  const sm = blurA(a, rt.w, rt.h, 1); for (let q = 0; q < a.length; q++) { const v = sm[q]; sd.data[q * 4] = sd.data[q * 4 + 1] = sd.data[q * 4 + 2] = 255; sd.data[q * 4 + 3] = Math.round(v); } sx.putImageData(sd, 0, 0);
+  // 2) ย่อลงกล่องเป้าหมายแล้วทำขอบให้คมเนียน
+  const W = dw + pad * 2, H = dh + pad * 2, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d", { willReadFrequently: true });
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = "high"; x.drawImage(sc, pad, pad, dw, dh);
+  const id = x.getImageData(0, 0, W, H);
+  for (let q = 0; q < W * H; q++) { const v = Math.min(1, Math.max(0, (id.data[q * 4 + 3] / 255 - 0.28) / 0.44)); id.data[q * 4] = id.data[q * 4 + 1] = id.data[q * 4 + 2] = 255; id.data[q * 4 + 3] = Math.round(v * v * (3 - 2 * v) * 255); }
+  x.putImageData(id, 0, 0);
+  x.globalCompositeOperation = "source-in"; const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#ffc4c8"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  return (rlCache[key] = { c, W, H, k, pad });
+}
+const coBox = (p, open = true) => `<details class="co-box" ${open ? "open" : ""}><summary class="ak-h" style="cursor:pointer;list-style:none">ดึงข้อมูลจากลิงก์ COROS</summary>
+    <label class="ak-fld ak-w"><span class="sx">วางลิงก์แชร์กิจกรรมจากแอป COROS แอปจะดึงระยะ เวลา HR เฉลี่ย และเส้นทางให้เอง</span><input id="${p}-link" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://s.coros.com/…"></label>
+    <button type="button" class="btn sm ak-w" data-act="colink" data-p="${p}" style="margin-top:6px">ดึงข้อมูลจากลิงก์</button>
+    <p class="sx" id="${p}-msg" role="status" style="margin:8px 0 0;min-height:1.2em">เส้นทางและ HR เก็บในเครื่องนี้เท่านั้น</p></details>`;
+const coMsg = (p, t) => { const m = dlg.querySelector(p === "sh" ? "#sh-msg" : "#fb-msg"); if (m) m.textContent = t; };
+async function coApply(p, id, t) {
+  const old = trkGet(id) || {}, rt = t.img ? await routeFromMap(t.img) : null;
+  trkSet(id, { avg: t.avgHr || old.avg || 0, ...(rt ? { rt } : old.rt ? { rt: old.rt } : {}) });
+  if (t.km) { const k = dlg.querySelector(p === "sh" ? "#sh-km" : "#fb-km"); if (k) k.value = String(t.km); }
+  if (t.min) { const m = dlg.querySelector(p === "sh" ? "#sh-min" : "#fb-min"); if (m) m.value = p === "sh" ? clockStr(t.min) : fmtT(t.min); }
+  if (p === "sh") { SH.over.km = String(t.km || SH.over.km); SH.over.min = t.min ? clockStr(t.min) : SH.over.min; if (rt) SH.show.route = 1; if (t.avgHr) SH.show.hr = 1; }
+  else if (draft) draft.hr = t.avgHr || draft.hr || 0;
+  const o = INDEX[id], got = [t.km ? `${t.km} กม.` : "", t.min ? fmtT(t.min) + (t.min >= 60 ? " ชม." : " นาที") : "", t.avgHr ? `HR เฉลี่ย ${t.avgHr}` : "", rt ? "เส้นทาง" : ""].filter(Boolean);
+  const dd = o && t.date && t.date !== o.date ? " (วันที่ในลิงก์ไม่ตรงกับเวิร์คเอาต์นี้ ตรวจดูว่าเลือกถูกอัน)" : "", ni = rt ? "" : t.img ? " (อ่านเส้นทางจากรูปในลิงก์นี้ไม่ได้)" : " (ลิงก์นี้ไม่มีเส้นทาง)";
+  coMsg(p, `ดึงแล้ว: ${got.join(" · ")}${ni}${dd}`);
+  if (p === "sh") paintShare();
+}
+document.addEventListener("input", (e) => { // วางลิงก์แล้วดึงให้เลย ไม่ต้องกดปุ่ม
+  const t = e.target; if (!t || !/^(fb|sh)-link$/.test(t.id || "")) return;
+  const p = t.id.slice(0, 2), v = t.value.trim(); if (!/^https:\/\/(sharepage|s)\.coros\.com\//i.test(v)) return;
+  clearTimeout(t._auto); t._auto = setTimeout(() => { const b = dlg.querySelector(`[data-act="colink"][data-p="${p}"]`); if (b && !b.disabled) corosLink(p, b); }, 350);
+});
+async function corosLink(p, btn) {
+  const id = p === "sh" ? SH.id : draft?.id, inp = dlg.querySelector(`#${p}-link`), raw = (inp?.value || "").trim(), url = raw.match(/https?:\/\/[^\s<>"']+/i)?.[0] || raw;
+  if (!url) return coMsg(p, "วางลิงก์จากแอป COROS ก่อน (กด แชร์ ในหน้ากิจกรรม แล้วคัดลอกลิงก์)");
+  if (!/^https:\/\/(sharepage|s)\.coros\.com\//i.test(url)) return coMsg(p, "ตอนนี้รองรับเฉพาะลิงก์แชร์จากแอป COROS (s.coros.com หรือ sharepage.coros.com)");
+  if (demo) return coMsg(p, "โหมดตัวอย่างดึงลิงก์ไม่ได้ เข้าสู่ระบบก่อน");
+  btn.disabled = true; coMsg(p, "กำลังอ่านลิงก์…");
+  try {
+    const r = await call("/api/link", { method: "POST", body: JSON.stringify({ url }) });
+    inp.value = ""; await coApply(p, id, { km: r.km, min: r.min, avgHr: r.hr, date: r.date, img: r.img });
+  } catch (e) { coMsg(p, e.message || "ดึงข้อมูลไม่สำเร็จ ลองกรอกเอง"); }
+  finally { btn.disabled = false; }
+}
+
+/* วาดรูปเส้นทาง (ครอปเต็มการ์ดมุมมน) และป้าย HR เฉลี่ยขนาดเล็กบนภาพแชร์ */
+function drawHeart(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s / 24, s / 24); c.beginPath(); c.moveTo(12, 21.2); c.bezierCurveTo(5, 15.4, 2, 12, 2, 8.2); c.bezierCurveTo(2, 5.2, 4.3, 3, 7.1, 3); c.bezierCurveTo(9.2, 3, 11, 4.2, 12, 6); c.bezierCurveTo(13, 4.2, 14.8, 3, 16.9, 3); c.bezierCurveTo(19.7, 3, 22, 5.2, 22, 8.2); c.bezierCurveTo(22, 12, 19, 15.4, 12, 21.2); c.closePath(); c.fillStyle = col; c.fill(); c.restore(); }
+function hrPill(c, hr, x, y, h, F, dry) { // ป้ายแก้วเข้ม: หัวใจ + เลข + bpm  (x,y = มุมซ้ายบน)
+  const pad = h * 0.34, ns = Math.round(h * 0.52); c.save(); c.font = `800 ${ns}px ${F.NUMF}`; const nw = F.nw(String(hr), ns);
+  c.font = `600 ${Math.round(h * 0.27)}px ${F.SANS}`; const uw = c.measureText("bpm").width, w = pad * 2 + h * 0.36 + 14 + nw + 12 + uw;
+  if (dry) { c.restore(); return w; }
+  rrect(c, x, y, w, h, h / 2); c.fillStyle = "rgba(12,6,14,.58)"; c.fill(); c.lineWidth = 2; c.strokeStyle = "rgba(255,255,255,.28)"; c.stroke();
+  drawHeart(c, x + pad, y + h / 2 - h * 0.18, h * 0.36, "#ff4a50");
+  F.num(String(hr), x + pad + h * 0.36 + 14, y + h / 2 + ns * 0.36, ns);
+  c.textAlign = "left"; c.font = `600 ${Math.round(h * 0.27)}px ${F.SANS}`; c.fillStyle = "rgba(255,255,255,.85)"; c.fillText("bpm", x + pad + h * 0.36 + 14 + nw + 12, y + h / 2 + h * 0.27 * 0.35); c.restore(); return w;
+}
+function drawMedia(c, W, H, P, sp, F) {
+  // sp = { mode: "bottom" (ชิดเหนือกลุ่มตัวเลข) | "top" (ใต้ตัวเลขระยะทาง), y: ขอบอ้างอิง, minTop, maxBottom, center }
+  // เส้นทางตัวเล็กอยู่บน ป้าย HR ใต้เส้นทาง
+  const rt = SH.show.route ? trkRt(SH.id) : null, hr = SH.show.hr ? trkHr(SH.id) : 0, post = SH.ratio === "post";
+  SH.cramped = false; if (!rt && !hr) return;
+  const gap = 10, ph = post ? 52 : 58, want = post ? 5 : 6, space = 14;
+  const room = sp.mode === "bottom" ? sp.y - gap - sp.minTop : sp.maxBottom - sp.y;
+  if (room < (rt ? 140 + (hr ? ph + space : 0) : ph)) { SH.cramped = true; return; }
+  const bh = Math.min(post ? 190 : 230, room - (hr ? ph + space : 0)), bw = post ? 250 : 300;
+  const L = rt ? routeLine(rt, bw, bh, want) : null;
+  const pw = hr ? hrPill(c, hr, 0, 0, ph, F, true) : 0, stackH = (L ? L.H - L.pad : 0) + (L && hr ? space : 0) + (hr ? ph : 0);
+  const top = sp.mode === "bottom" ? sp.y - gap - stackH : sp.y, cxm = W / 2;
+  let yy = top;
+  if (L) {
+    const x = sp.center ? cxm - L.W / 2 : P - L.pad, y = yy - L.pad * 0.5;
+    c.save(); c.shadowColor = "rgba(255,70,80,.85)"; c.shadowBlur = 16; c.drawImage(L.c, x, y); c.shadowBlur = 6; c.drawImage(L.c, x, y); c.shadowBlur = 0; c.drawImage(L.c, x, y);
+    [[rt.s, rt.rs, "#4ade80"], [rt.e, rt.re, "#ff4a50"]].forEach(([pt, r0, col]) => { if (!pt) return; const rr = Math.max(want * 0.95, (r0 || 0) * L.k * 1.05); c.beginPath(); c.arc(x + L.pad + pt[0] * L.k, y + L.pad + pt[1] * L.k, rr, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = want * 0.4; c.strokeStyle = "#fff"; c.stroke(); });
+    c.restore(); yy += L.H - L.pad + (hr ? space : 0);
+  }
+  if (hr) hrPill(c, hr, sp.center ? cxm - pw / 2 : P, yy, ph, F);
+}
+function paintShare() {
+  const cv = dlg.querySelector("#shc"); if (!cv) return;
+  dlg.querySelectorAll('[data-act="shr"]').forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === SH.ratio)));
+  dlg.querySelectorAll('[data-act="shs"]').forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.v === SH.style)));
+  dlg.querySelectorAll('[data-act="sht"]').forEach((b) => b.setAttribute("aria-pressed", String(!!SH.show[b.dataset.v])));
+  { const has = { route: !!trkRt(SH.id), hr: !!trkHr(SH.id) };
+    dlg.querySelectorAll('[data-act="sht"]').forEach((b) => { if (b.dataset.v in has) b.hidden = !has[b.dataset.v]; });
+    const th = dlg.querySelector("#sh-trkh"); if (th) th.textContent = SH.cramped ? "พื้นที่บนภาพไม่พอสำหรับรูปเส้นทาง ลองปิดกราฟ ปิดข้อมูลบางอย่าง หรือใช้สัดส่วนเรื่องราว 9:16" : has.route || has.hr ? "" : "ยังไม่มีรูปเส้นทางหรือ HR วางลิงก์ COROS ด้านล่างแล้วปุ่มเส้นทาง/HR จะขึ้นให้เลือก"; }
+  const zw = dlg.querySelector("#sh-zw"); if (zw) zw.hidden = !SH.photo;
+  cv.classList.toggle("drag", !!SH.photo);
+  const d = shareData(SH.id), nt = dlg.querySelector("#sh-note");
+  if (nt && d) nt.textContent = d.real ? "ใช้ระยะและเวลาที่คุณกรอกไว้" : "ใช้ค่าตามแผน กรอกระยะและเวลาจริงได้ในหน้า \"ทำเสร็จแล้ว\"";
+  drawShare(cv);
+  { const th = dlg.querySelector("#sh-trkh"); if (th && SH.cramped) th.textContent = "พื้นที่บนภาพไม่พอสำหรับรูปเส้นทาง ลองปิดกราฟ ปิดข้อมูลบางอย่าง หรือใช้สัดส่วนเรื่องราว 9:16"; }
+}
+const shMsg = (t) => { const m = dlg.querySelector("#sh-msg"); if (m) m.textContent = t; };
+function loadPhoto(file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = () => { SH.photo = im; SH.zoom = 1; SH.ox = SH.oy = 0; const z = dlg.querySelector("#sh-zoom"); if (z) z.value = 1; shMsg(""); paintShare(); };
+  im.onerror = () => { URL.revokeObjectURL(url); shMsg("เปิดรูปนี้ไม่ได้ ลองรูปอื่น (JPG หรือ PNG)"); };
+  im.src = url;
+}
+async function shareImg(mode) {
+  const cv = dlg.querySelector("#shc"), d = shareData(SH.id); if (!cv || !d) return;
+  try { await document.fonts?.load("900 100px Orbitron", "0123456789:."); } catch {}
+  drawShare(cv);
+  const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+  if (!blob) return shMsg("สร้างภาพไม่สำเร็จ ลองใหม่อีกครั้ง");
+  const file = new File([blob], `k4rc-${d.date}.png`, { type: "image/png" });
+  if (mode === "share" && navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: d.x.name }); shMsg(""); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  shMsg(mode === "share" ? "เครื่องนี้แชร์ตรงไม่ได้ จึงบันทึกภาพให้แทน" : "บันทึกภาพแล้ว");
+}
+MODALS.share = (id) => {
+  if (SH.id !== id) { SH.id = id; SH.photo = null; SH.zoom = 1; SH.ox = SH.oy = 0; SH.over = { km: "", min: "" }; }
+  const d0 = shareData(id), g0 = hasGraph(id);
+  const chip = (act, v, t) => `<button type="button" class="ak-cx" data-act="${act}" data-v="${v}" aria-pressed="false">${t}</button>`;
+  return { title: "แชร์เวิร์คเอาต์", html: `<canvas id="shc" class="ak-shc" width="1080" height="1920" role="img" aria-label="ตัวอย่างภาพที่จะแชร์"></canvas>
+    <p class="sx" id="sh-note" style="text-align:center;margin:8px 0 0"></p>
+    <div class="ak-h">รูปพื้นหลัง</div>
+    <div class="ak-two"><button type="button" class="btn" data-act="shp">เลือกรูป</button><button type="button" class="btn" data-act="shpc">ถ่ายรูป</button></div>
+    <input id="sh-file" type="file" accept="image/*" hidden><input id="sh-cam" type="file" accept="image/*" capture="environment" hidden>
+    <div id="sh-zw" hidden style="margin-top:10px"><label class="sx" for="sh-zoom">ซูมรูป (ลากบนภาพเพื่อเลื่อนตำแหน่ง)</label><input id="sh-zoom" type="range" min="1" max="3" step="0.02" value="${SH.zoom}" class="ak-w"><button type="button" class="btn sm ak-w" data-act="shpx" style="margin-top:6px">เอารูปออก</button></div>
+    <div class="ak-h">สัดส่วน</div><div class="ak-cxr wrap">${chip("shr", "story", "เรื่องราว 9:16")}${chip("shr", "post", "โพสต์ 4:5")}</div>
+    <div class="ak-h">แบบการ์ด</div><div class="ak-cxr wrap">${SH_STYLES.map((t, i) => chip("shs", i, t)).join("")}</div>
+    <div class="ak-h">ข้อมูลที่แสดง</div><div class="ak-cxr wrap">${SH_TOG.filter(([k]) => k !== "graph" || g0).map(([k, t]) => chip("sht", k, t)).join("")}</div>
+    <p class="sx" id="sh-trkh" style="margin:8px 0 0"></p>
+    ${coBox("sh", !(trkRt(SH.id) || trkHr(SH.id)))}
+    <div class="ak-h">กรอกข้อมูลจริง</div>
+    <div class="ak-two"><label class="ak-fld"><span class="sx">ระยะ (กม.)</span><input id="sh-km" type="number" inputmode="decimal" step="0.01" min="0" max="500" value="${SH.over.km}" placeholder="${d0?.km ? +d0.km.toFixed(2) : ""}"></label><label class="ak-fld"><span class="sx">เวลา (ชม:นาที:วินาที)</span><input id="sh-min" type="text" inputmode="numeric" autocomplete="off" maxlength="8" value="${esc(SH.over.min)}" placeholder="${d0?.min ? clockStr(d0.min) : "เช่น 38:00"}" aria-describedby="sh-minh"></label></div>
+    <p class="sx" id="sh-minh" style="margin:6px 0 0">พิมพ์ตัวเลขอย่างเดียวได้ ระบบใส่ : ให้ เช่น 3800 = 38:00, 10530 = 1:05:30 หรือพิมพ์ 38 = 38 นาที</p>
+    <button type="button" class="btn sm ak-w" data-act="shsave" style="margin-top:8px">บันทึกค่านี้เป็นผลจริงของเวิร์คเอาต์</button>
+    <div class="ak-foot"><button type="button" class="btn" data-act="shsv">บันทึกภาพ</button><button type="button" class="btn primary" data-act="shgo">แชร์</button></div>`,
+    after: () => {
+      const cv = dlg.querySelector("#shc"); let drag = null;
+      dlg.querySelector("#sh-file").onchange = (e) => loadPhoto(e.target.files[0]);
+      dlg.querySelector("#sh-cam").onchange = (e) => loadPhoto(e.target.files[0]);
+      dlg.querySelector("#sh-km").oninput = (e) => { SH.over.km = e.target.value; paintShare(); };
+      dlg.querySelector("#sh-min").oninput = (e) => { const v = e.target.value, back = e.inputType === "deleteContentBackward"; e.target.value = back ? v.replace(/[^\d:]/g, "") : maskTime(v); SH.over.min = e.target.value; const bad = SH.over.min.includes(":") && !parseT(SH.over.min) && SH.over.min.split(":").length >= 2 && SH.over.min.split(":").every(Boolean); shMsg(bad ? "ค่าเวลาไม่ถูกต้อง (นาทีและวินาทีต้องไม่เกิน 59)" : ""); paintShare(); };
+      dlg.querySelector("#sh-zoom").oninput = (e) => { SH.zoom = +e.target.value; drawShare(cv); };
+      cv.onpointerdown = (e) => { if (!SH.photo) return; cv.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, ox: SH.ox, oy: SH.oy }; };
+      cv.onpointermove = (e) => { if (!drag) return; const k = cv.width / cv.getBoundingClientRect().width; SH.ox = drag.ox + (e.clientX - drag.x) * k; SH.oy = drag.oy + (e.clientY - drag.y) * k; drawShare(cv); };
+      cv.onpointerup = cv.onpointercancel = () => { drag = null; };
+      paintShare(); const redraw = () => dlg.querySelector("#shc") && drawShare(dlg.querySelector("#shc")); document.fonts?.load("900 100px Orbitron", "0123456789:.").then(redraw, redraw); document.fonts?.ready.then(redraw);
+    } };
+};
+
+/* ---------- ข้อมูลโปรไฟล์: ความต่อเนื่อง เหรียญ เป้าหมาย PR ร่างกาย (เลือกแสดงได้) ---------- */
+const PF_DEF = { streak: 1, medals: 1, goal: 1, body: 1 };
+const PF_LABELS = [["streak", "ความต่อเนื่อง"], ["medals", "เหรียญ"], ["goal", "เป้าหมายและ PR"], ["body", "ข้อมูลร่างกาย"]];
+const pfGet = () => { try { return { ...PF_DEF, ...JSON.parse(store.get("rp_pf:" + me) || "{}") }; } catch { return { ...PF_DEF }; } };
+function athStats(weeks, today) {
+  const all = weeks.flatMap((w) => w.days.flatMap((d) => trainOf(d))), dn = all.filter((x) => done[x.id]);
+  let run = 0, best = 0;
+  weeks.forEach((w, i) => {
+    if (i > CUR) return;
+    const items = w.days.flatMap((d) => trainOf(d).map((x) => ({ x, date: d.date }))); if (!items.length) return;
+    if (i < CUR) { if (items.every((o) => done[o.x.id])) { run++; best = Math.max(best, run); } else run = 0; }
+    else { const due = items.filter((o) => o.date <= today); if (due.length && due.every((o) => done[o.x.id])) { run++; best = Math.max(best, run); } }
+  });
+  return { n: dn.length, km: dn.reduce((s, x) => s + kmOf(x), 0), maxKm: Math.max(0, ...dn.map(kmOf)), perfect: weeks.filter((w) => { const t = wkStats(w); return t.n && t.doneN === t.n; }).length, cur: run, best };
+}
+const MEDALS = [["ก้าวแรก", (s) => s.n >= 1], ["10 ครั้ง", (s) => s.n >= 10], ["50 ครั้ง", (s) => s.n >= 50], ["50 กม.", (s) => s.km >= 50], ["100 กม.", (s) => s.km >= 100], ["250 กม.", (s) => s.km >= 250],
+  ["500 กม.", (s) => s.km >= 500], ["วิ่งยาว 15 กม.", (s) => s.maxKm >= 15], ["วิ่งยาว 21 กม.", (s) => s.maxKm >= 21], ["ครบทั้งสัปดาห์", (s) => s.perfect >= 1], ["ต่อเนื่อง 4 สัปดาห์", (s) => s.best >= 4], ["ต่อเนื่อง 8 สัปดาห์", (s) => s.best >= 8]];
+const cells = (a) => `<div class="ak-cells">${a.map(([v, l]) => `<div class="ak-cell"><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>`;
+function profileCards(weeks, today) {
+  const pf = pfGet(), out = [], p = profile || {}, S = weeks.length ? athStats(weeks, today) : null;
+  if (pf.medals && S) { const got = MEDALS.filter(([, t]) => t(S)).length; out.push(`<section class="ak-g"><div class="ak-row ak-sb"><b class="ak-m">เหรียญ</b><span class="sx">${got}/${MEDALS.length}</span></div><div class="ak-meds">${MEDALS.map(([l, t]) => `<span class="ak-med${t(S) ? " on" : ""}">${SV(t(S) ? "M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" : "M7 11V8a5 5 0 0110 0v3M6 11h12v9H6z", 1.8)}<span>${l}</span></span>`).join("")}</div></section>`); }
+  if (pf.goal) {
+    const ev = plan?.meta.eventDate, left = ev ? Math.round((new Date(ev + "T00:00:00Z") - new Date(today + "T00:00:00Z")) / 864e5) : null, pr = p.pr || {};
+    const prs = [["k5", "5K"], ["k10", "10K"], ["k21", "21K"], ["k42", "42K"]].filter(([k]) => pr[k]).map(([k, l]) => [pr[k], l]);
+    if (plan?.meta.event || p.goal || prs.length) out.push(`<section class="ak-g"><b class="ak-m">เป้าหมาย</b>
+      ${plan?.meta.event ? `<div class="ak-line"><span>${esc(plan.meta.event)}</span><b>${ev ? shortDate(ev) + (left >= 0 ? ` · อีก ${left} วัน` : "") : ""}</b></div>` : ""}${p.goal ? `<div class="ak-line"><span>เวลาที่ตั้งเป้า</span><b class="ak-m">${esc(p.goal)}</b></div>` : ""}
+      ${prs.length ? `<div class="ak-h" style="margin-top:12px">สถิติส่วนตัว</div>${cells(prs)}` : ""}</section>`);
+  }
+  if (pf.body) {
+    const b = [[p.age, "อายุ"], [p.weight, "กก."], [p.hrMax, "HR สูงสุด"], [p.hrRest, "HR พัก"]].filter(([v]) => v);
+    if (b.length) out.push(`<section class="ak-g"><b class="ak-m">ร่างกาย</b>${cells(b.map(([v, l]) => [String(v), l]))}</section>`);
+  }
+  return out.join("");
+}
+MODALS.profile = () => {
+  const p = profile || {}, pr = p.pr || {}, pf = pfGet();
+  const f = (id, label, v, mode = "decimal", ph = "") => `<label class="ak-fld"><span class="sx">${label}</span><input id="pf-${id}" inputmode="${mode}" autocomplete="off" value="${esc(v ?? "")}" placeholder="${ph}"></label>`;
+  return { title: "ข้อมูลของฉัน", html: `<p class="sx" style="margin:0 0 4px">ไม่บังคับ กรอกเท่าที่สะดวก โค้ชจะเห็นข้อมูลนี้ในหน้าโค้ช</p>
+    <div class="ak-h">แสดงในหน้าโปรไฟล์</div><div class="ak-cxr wrap two">${PF_LABELS.map(([k, t]) => `<button type="button" class="ak-cx" data-act="pft" data-v="${k}" aria-pressed="${!!pf[k]}">${t}</button>`).join("")}</div>
+    <div class="ak-h">รูปโปรไฟล์และฟีดทีม</div><button type="button" class="btn ak-w" data-act="avatar">เปลี่ยนรูปโปรไฟล์</button>
+    <div class="ak-cxr wrap" style="margin-top:8px"><button type="button" class="ak-cx" id="pf-feed" data-act="pff" aria-pressed="${!p.feedOff}">แสดงผลซ้อมของฉันในฟีดทีม</button></div>
+    <p class="sx" style="margin:6px 0 0">เพื่อนร่วมทีมเห็นชื่อ รูป ระยะ เวลา ความเหนื่อย และความรู้สึก 24 ชั่วโมง ส่วนอาการเจ็บและบันทึกถึงโค้ชเห็นเฉพาะโค้ช</p>
+    <div class="ak-h">ร่างกาย</div><div class="ak-two">${f("age", "อายุ (ปี)", p.age)}${f("weight", "น้ำหนัก (กก.)", p.weight)}${f("hrMax", "ชีพจรสูงสุด", p.hrMax, "numeric")}${f("hrRest", "ชีพจรขณะพัก", p.hrRest, "numeric")}</div>
+    <div class="ak-h">เป้าหมายงานแข่ง</div>${f("goal", "เวลาที่ตั้งเป้า (ชม.:นาที:วินาที)", p.goal, "numeric", "เช่น 1:55:00")}
+    <div class="ak-h">สถิติส่วนตัว (PR)</div><div class="ak-two">${f("k5", "5K", pr.k5, "numeric", "25:30")}${f("k10", "10K", pr.k10, "numeric", "52:00")}${f("k21", "21K", pr.k21, "numeric", "1:55:00")}${f("k42", "42K", pr.k42, "numeric", "4:10:00")}</div>
+    <p class="err" id="pf-err" role="alert" style="margin:10px 0 0"></p>
+    <div class="ak-foot"><button type="button" class="btn" data-act="mclose">ยกเลิก</button><button type="button" class="btn primary" data-act="pfsave">บันทึก</button></div>` };
+};
+async function saveProfile() {
+  const v = (k) => dlg.querySelector("#pf-" + k).value.trim(), err = dlg.querySelector("#pf-err"), num = (k, lo, hi, name) => { const t = v(k); if (!t) return ""; const x = Number(t); if (!(x >= lo && x <= hi)) throw new Error(`${name} ควรอยู่ระหว่าง ${lo}–${hi}`); return x; };
+  const tm = (k, name) => { const t = v(k); if (t && !/^\d{1,2}(:\d{2}){1,2}$/.test(t)) throw new Error(`${name} ใส่เป็นรูปแบบ 25:30 หรือ 1:55:00`); return t; };
+  try {
+    const body = { age: num("age", 5, 100, "อายุ"), weight: num("weight", 20, 250, "น้ำหนัก"), hrMax: num("hrMax", 100, 250, "ชีพจรสูงสุด"), hrRest: num("hrRest", 25, 120, "ชีพจรพัก"), goal: tm("goal", "เวลาเป้าหมาย"), feedOff: dlg.querySelector("#pf-feed")?.getAttribute("aria-pressed") !== "true", pr: { k5: tm("k5", "PR 5K"), k10: tm("k10", "PR 10K"), k21: tm("k21", "PR 21K"), k42: tm("k42", "PR 42K") } };
+    if (demo) { const c = {}; for (const k of ["age", "weight", "hrMax", "hrRest", "goal"]) if (body[k]) c[k] = body[k]; if (body.feedOff) { c.feedOff = true; feed = feed.filter((p) => !p.me); } const pr = Object.fromEntries(Object.entries(body.pr).filter(([, x]) => x)); if (Object.keys(pr).length) c.pr = pr; profile = Object.keys(c).length ? c : null; }
+    else profile = (await call("/api/profile", { method: "POST", body: JSON.stringify(body) })).profile;
+    closeM(); render();
+  } catch (e) { if (err) err.textContent = e.message || "บันทึกไม่สำเร็จ"; }
+}
+
+/* ---------- เหตุการณ์ ---------- */
+const FREE = new Set(["ptab", "pw", "pff", "shareprof", "pft", "pfsave", "tab", "logout", "install", "backup", "avatar", "avatarrm", "m", "mback", "mclose", "noop"]);
+document.addEventListener("click", (e) => {
+  if (e.target === dlg) return closeM();
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act;
+  if (!plan && !FREE.has(a)) return;
+  if (a === "m") { if (b.dataset.m === "cal") cm = null; openM(b.dataset.m, b.dataset.v); }
+  else if (a === "mback") backM();
+  else if (a === "mclose") closeM();
+  else if (a === "rpe") { const v = +b.dataset.v; draft.rpe = draft.rpe && Math.ceil(draft.rpe / 2) === v / 2 ? 0 : v; paintFb(); }
+  else if (a === "feel") { draft.feel = draft.feel === +b.dataset.v ? 0 : +b.dataset.v; paintFb(); }
+  else if (a === "area") { draft.area = b.dataset.v; paintFb(); }
+  else if (a === "fbsave") { const mv = dlg.querySelector("#fb-min").value.trim(), fbMin = parseT(mv); if (mv && !fbMin) { alert("ค่าเวลาไม่ถูกต้อง นาทีและวินาทีต้องไม่เกิน 59 เช่น 39:09"); return; } const f = { rpe: draft.rpe, feel: draft.feel, pain: !!draft.area, area: draft.area, km: +dlg.querySelector("#fb-km").value || 0, min: fbMin, hr: draft.hr || 0, note: dlg.querySelector("#fb-note").value.trim() }, id = draft.id; closeM(); setDone(id, true, f); toast("บันทึกแล้ว", ["m", "share", id, "แชร์เวิร์คเอาต์"]); }
+  else if (a === "fbskip") { const id = draft.id; closeM(); setDone(id, true); }
+  else if (a === "fbundo") { const id = draft.id; closeM(); setDone(id, false); }
+  else if (a === "done") openFb(b.dataset.id, false);
+  else if (a === "wbar") { const y = scrollY; wbWk = +b.dataset.v; render(); scrollTo(0, y); }
+  else if (a === "skip") setSkip(b.dataset.id, true);
+  else if (a === "unskip") setSkip(b.dataset.id, false);
+  else if (a === "fb") openFb(b.dataset.id, true);
+  else if (a === "shr") { SH.ratio = b.dataset.v; paintShare(); }
+  else if (a === "shs") { SH.style = +b.dataset.v; paintShare(); }
+  else if (a === "sht") { SH.show[b.dataset.v] = SH.show[b.dataset.v] ? 0 : 1; paintShare(); }
+  else if (a === "shp") dlg.querySelector("#sh-file").click();
+  else if (a === "shpc") dlg.querySelector("#sh-cam").click();
+  else if (a === "shpx") { SH.photo = null; SH.ox = SH.oy = 0; paintShare(); }
+  else if (a === "shsave") { const d = shareData(SH.id); if (!d) return; setDone(SH.id, true, { ...(fb[SH.id] || {}), km: +SH.over.km || fb[SH.id]?.km || 0, min: parseT(SH.over.min) || fb[SH.id]?.min || 0, hr: trkHr(SH.id) || fb[SH.id]?.hr || 0 }); SH.over = { km: "", min: "" }; shMsg("บันทึกเป็นผลจริงแล้ว โค้ชจะเห็นด้วย"); }
+  else if (a === "shgo") shareImg("share");
+  else if (a === "colink") corosLink(b.dataset.p, b);
+  else if (a === "shsv") shareImg("save");
+  else if (a === "pft") { const pf = pfGet(); pf[b.dataset.v] = pf[b.dataset.v] ? 0 : 1; store.set("rp_pf:" + me, JSON.stringify(pf)); b.setAttribute("aria-pressed", String(!!pf[b.dataset.v])); render(); }
+  else if (a === "pfsave") saveProfile();
+  else if (a === "undo") setDone(b.dataset.id, false);
+  else if (a === "day") { sel = b.dataset.d; render(); scrollTo(0, 0); }
+  else if (a === "tab") go(b.dataset.v);
+  else if (a === "wk") { wi = Math.max(0, Math.min(plan.weeks.length - 1, wi + +b.dataset.d)); sel = null; render(); }
+  else if (a === "mon") { cm = addMonth(cm, +b.dataset.d); refreshM(); }
+  else if (a === "rng") { rng = +b.dataset.v; render(); }
+  else if (a === "dayjump") { const k = plan.weeks.findIndex((w) => b.dataset.d >= w.startDate && b.dataset.d <= w.endDate); if (k >= 0) { wi = k; sel = b.dataset.d; go("plan"); } }
+  else if (a === "wkjump") { wi = +b.dataset.i; sel = null; go("plan"); }
+  else if (a === "ptab") { ptab = b.dataset.v; render(); }
+  else if (a === "pw") { psel = +b.dataset.i; render(); }
+  else if (a === "pff") b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true"));
+  else if (a === "shareprof") shareProfile();
+  else if (a === "avatar") avInput.click();
+  else if (a === "avatarrm") { store.del(avKey()); pushAvatar(""); render(); }
+  else if (a === "logout") logout();
+  else if (a === "install") installApp();
+  else if (a === "backup") backupMine();
+});
+
+if (demo) { me = "นักวิ่งตัวอย่าง"; paces = DEMO_PACES; plan = demoPlan(); seedDemo(); msgs = demoMsgs(); feed = demoFeed(); render(); }
+else if (token) load();
+else showLogin();
+
+</script>
+</body>
+</html>

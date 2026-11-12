@@ -1,0 +1,248 @@
+/* Kotcha-style theme (หน้านักกีฬาเท่านั้น) โหลดต่อจาก app.css
+   โทนมาจากแอป Kotcha: พื้นดำสนิท การ์ดมน ปุ่มทรงแคปซูล ฟอนต์ Inter แดงแบรนด์ ทอง/เงินสำหรับเหรียญ */
+:root, [data-theme="dark"] { --lane: transparent; --display: var(--font);}
+body { font-family: var(--font); font-variant-numeric: tabular-nums;}
+/* ยกเลิกสไตล์เอียง/มุมตัดของธีมเดิม */
+.whero, .sg, .ac, .donebtn, .btn, .tb, .stat, .pt, .card2, .bdg, .mc, .crow, .pz, .pzbar, .vb i, .stchip, .wnav2 button, .pill, .scale button,
+.chip span, .tabs button, .x, .plus, .cempty, .wnav button { clip-path: none !important;}
+.wh-num, .big, .dn, .bib-num, .pt b, .stat b, .wh-stats b, .bdg b, .tile b, .nv, .avatar { font-family: var(--font); font-style: normal; font-weight: 700; letter-spacing: -.02em; transform: none;}
+.vh { font: 700 1.7rem/1.2 var(--font); font-style: normal; text-transform: none; letter-spacing: -.02em;}
+.vh::before, .whero::before, .whero::after { content: none;}
+.vh2, .wh-k { text-transform: none; letter-spacing: 0; font-size: .85rem; color: var(--tx3);}
+.btn, .donebtn.off, .pill, .scale button, .chip span, .tabs button, .x, .plus, .cempty, .wnav button, .wnav2 button { border-radius: 999px; background: var(--bg3);}
+.btn.primary, .donebtn { border-radius: 999px; background: var(--accent); font-weight: 600; letter-spacing: 0;}
+.donebtn { width: 100%; min-height: 48px; border: 0;}
+.whero, .card2, .stat, .pt, .crow, .pz, .login-card, .wcard, .tcard, .hweek { border: 0; border-radius: 24px; background: var(--bg2); box-shadow: none;}
+.whero { padding: 20px;}
+.wh-num { font-size: 72px; line-height: .95;}
+.sg { height: 6px; border-radius: 99px;} .sg.on { background: var(--c);}
+.ac { border-radius: 20px; border: 0; background: var(--bg2);} .ac:hover { transform: none;}
+.ac.st-today { box-shadow: inset 0 0 0 1.5px var(--accent);}
+.dc, .dc::before { border-radius: 50%; transform: none;} .dc { width: 40px; height: 40px;}
+.dc.done::before { background: var(--run); border-color: var(--run);}
+.avatar { border-radius: 50%; background: var(--bg4);}
+.mc { border-radius: 14px;} .mc.today { box-shadow: inset 0 0 0 1.5px var(--accent);}
+/* เหรียญความสำเร็จ: โล่หกเหลี่ยม ทอง = ได้แล้ว, เทา = ยังไม่ถึง (เหมือนโล่ใน Kotcha) */
+.bdg { border-radius: 0; background: var(--bg3); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%) !important; padding-block: 1.3rem;}
+/* แถบเมนูล่าง: ไอคอน + ชื่อ */
+/* ---------- หน้า Home ---------- */
+.hhead { display: flex; justify-content: space-between; align-items: center; margin: .4rem 0 1.1rem;}
+.hname { font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2;}
+.hhead .avatar { width: 46px; height: 46px; display: grid; place-items: center; font-size: 1rem;}
+.hero2 { position: relative; overflow: hidden; border-radius: 28px; padding: 22px 20px; margin-bottom: 1.2rem; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;}
+.hero2 .k { font-size: .8rem; color: var(--tx2);} .hero2 h2 { font-size: 1.35rem; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; margin-top: .2rem;}
+.cd { display: flex; gap: 10px; margin-top: 1.4rem;} .cdb { text-align: center; min-width: 58px;}
+.cdb b { display: block; font-size: 2rem; font-weight: 700; line-height: 1.1;} .cdb span { font-size: .7rem; color: var(--tx2);}
+.h2t { font-size: 1.1rem; font-weight: 600; margin: 1.4rem 0 .7rem;}
+.tcard { display: grid; gap: .8rem; padding: 16px; margin-bottom: .7rem; border-left: 0;}
+.tcard.done { opacity: .72;} .tcard.s-rest { color: var(--tx2);}
+.tc-main { display: grid; gap: .15rem; text-align: left; background: none; border: 0; padding: 0; color: inherit;}
+.tc-k { font-size: .78rem; font-weight: 600; color: var(--c, var(--tx3));} .tc-t { font-size: 1.2rem; font-weight: 600; line-height: 1.3;} .tc-m { font-size: .9rem; color: var(--tx2);}
+.hweek { padding: 18px 20px;} .hw-top { display: flex; justify-content: space-between; align-items: center;} .hw-big { display: flex; align-items: baseline; gap: .5rem; margin: .5rem 0 .9rem;}
+.hweek .wh-of { color: var(--tx2);} .hweek .segs { margin: 0 0 .6rem;}
+.uprow { display: grid; grid-template-columns: 76px 1fr auto; gap: .6rem; width: 100%; align-items: center; text-align: left; padding: .85rem 1rem; margin-bottom: .5rem; background: var(--bg2); border: 0; border-radius: 18px; color: inherit;}
+.up-d { font-size: .8rem; color: var(--tx3);} .up-t { font-weight: 500; line-height: 1.3;} .up-m { font-size: .85rem; color: var(--tx2);}
+.uprow::before { content: none;}
+/* ================= รอบ 2: ทุกหน้าให้เป็นสไตล์ Kotcha ================= */
+.view { padding-top: max(env(safe-area-inset-top), 14px);}
+.notice, .warn, .offline { background: var(--bg2); border: 0; border-radius: 18px; padding: 14px 16px; color: var(--tx2);}
+.warn { color: var(--warn);} .offline { color: var(--warn); font-size: .85rem; margin-bottom: .8rem;}
+.muted, .note { color: var(--tx3);} .link { font-weight: 600;}
+input, select, textarea { background: var(--bg3); border: 1.5px solid transparent; border-radius: 16px; padding: .8rem 1rem;}
+input:focus, select:focus, textarea:focus { outline: none;}
+label.l { color: var(--tx2); font-weight: 500; margin: 1rem 0 .4rem;}
+/* ล็อกอิน */
+.login-card { background: transparent; padding: 1rem .5rem; max-width: 400px;}
+.login-card .logo { display: block; margin: 0 auto .8rem; max-width: 190px; height: auto;}
+.login-card .btn { min-height: 52px; font-size: 1rem;}
+.login-card .btn.primary { margin-top: 1.2rem;}
+/* ฮีโร่สัปดาห์ */
+.whero { border-radius: 28px; padding: 22px 20px;}
+.wh-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em;} .wh-sub { color: var(--tx2);}
+.wh-stats { gap: 0; border-radius: 18px; padding: 12px 6px;}
+.wh-stats > div { text-align: center;} .wh-stats b { font-size: 1.35rem;}
+.wnav2 button { width: 40px; height: 40px; font-size: 1.2rem;}
+/* แถบวัน */
+.strip { gap: 4px; margin: 1rem 0 .4rem;}
+.dy { background: none; border: 0; color: var(--tx3); font-size: .75rem; font-weight: 500;}
+.dc { background: var(--bg2); font-weight: 600; color: var(--tx); font-size: .95rem;}
+.dc::before { border: 0; background: transparent;}
+.dc.rest { color: var(--tx3);}
+.dh2 { font-size: 1.1rem; font-weight: 600; margin: 1.2rem 0 .7rem; text-transform: none; letter-spacing: 0;}
+/* การ์ดเวิร์คเอาต์ */
+.wcard { position: relative; padding: 20px; margin-bottom: 14px; border-radius: 28px; background: radial-gradient(90% 60% at 100% 0, color-mix(in srgb, var(--c, var(--accent)) 24%, transparent), transparent 65%), var(--bg2);}
+.wcard.s-rest { background: var(--bg2);}
+.wmeta { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem;}
+.sn { font-size: .75rem; font-weight: 600; padding: .2rem .7rem; border-radius: 99px;}
+.okmark, .prio { font-size: .75rem; font-weight: 600; padding: .2rem .7rem; border-radius: 99px;} .prio { background: var(--accent);}
+.wtitle { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.25; margin-bottom: .9rem;}
+.wcard.done { opacity: .9;}
+.nums { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-bottom: 1rem;}
+.nums > div { padding: 0 .2rem; border-left: 1px solid var(--bd);} .nums > div:first-child { border: 0; padding-left: 0;}
+.nv { font-size: 1.9rem;} .nu { font-size: .8rem; color: var(--tx3);}
+.srows { display: grid; gap: .5rem; margin: .8rem 0;} .srow { display: flex; justify-content: space-between; gap: 1rem; background: var(--bg3); border-radius: 16px; padding: .8rem 1rem;}
+.chipsP { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0;}
+.cp { background: var(--bg3); border-radius: 99px; padding: .25rem .8rem; font-size: .8rem; font-weight: 500;} .cp.mut { color: var(--tx3);}
+.wtx { color: var(--tx2); line-height: 1.6;} .fbline { margin-top: .8rem; padding: .8rem 1rem; background: var(--bg3); border-radius: 16px; color: var(--tx2); font-size: .88rem;}
+.btns2 { display: grid; gap: .5rem; margin-top: 1rem;} .donebtn.off { background: var(--bg4);}
+/* หน้าต่างล่าง (bottom sheet) */
+dialog.sheet { background: var(--bg2); color: var(--tx); border: 0; border-radius: 28px 28px 0 0; margin: auto 0 0; width: min(100%, 520px); max-width: 100%; margin-inline: auto; padding-top: 18px;}
+dialog.sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 4px; background: var(--bd2); margin: 0 auto 8px;}
+dialog::backdrop { }
+.sh-head, .m-head { background: none;} .m-title { font-size: 1.3rem; font-weight: 700;} .m-sec { color: var(--tx2); font-weight: 600; margin: 1.2rem 0 .5rem;}
+.scale { display: flex; flex-wrap: wrap; gap: 6px;} .scale button { min-width: 42px; min-height: 42px; font-weight: 600;} .scale.five { display: grid; grid-template-columns: repeat(5, 1fr);}
+.m-foot { margin-top: 1rem;} .m-foot .btn { flex: 1; min-height: 50px;}
+/* ปฏิทิน */
+.mnav { display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem;} .mnav b { font-size: 1.1rem;}
+.mcal { gap: 5px;} .mh { color: var(--tx3); font-size: .75rem; text-align: center;}
+.mc { background: var(--bg2); border: 0; border-radius: 14px; color: var(--tx);} .mc.out { opacity: .35;} .mc .mk { color: var(--tx2);}
+.crow { background: var(--bg2); border: 0; border-radius: 20px; margin-bottom: .5rem; color: var(--tx);}
+.cbars i { background: var(--accent); border-radius: 4px 4px 0 0;} .cbars i.r { background: var(--bg4);}
+/* สถิติ + เพซ */
+.stats { gap: 10px;} .stat { padding: 1.1rem .8rem; text-align: left;} .stat b { font-size: 2rem;} .stat span { color: var(--tx3);}
+.card2 { padding: 20px; margin-bottom: 14px;} .card2 h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: .9rem;}
+.vb i.p { border-radius: 6px;} .vb i.d { background: var(--accent); border-radius: 6px;}
+.ptiles { gap: 8px;} .pt { background: var(--bg3); padding: .9rem;} .legend2 { color: var(--tx3); font-size: .78rem;}
+.pz { display: grid; grid-template-columns: 8.5rem 1fr auto; align-items: center; gap: .8rem; padding: .9rem 1rem; margin-bottom: .5rem; border: 0;}
+.pzbar { height: 8px; border-radius: 99px; background: var(--bg4); overflow: hidden;} .pzbar i { display: block; height: 100%; border-radius: 99px;}
+/* โปรไฟล์ + บัตรแข่ง + เหรียญ */
+.who { text-align: center; margin: 1rem 0 1.4rem;} .who .avatar { width: 84px; height: 84px; margin: 0 auto .7rem; display: grid; place-items: center; font-size: 1.9rem;} .who h1 { font-size: 1.5rem; font-weight: 700;}
+.bib { position: relative; border-radius: 28px; padding: 22px 20px; margin-bottom: 1rem; overflow: hidden; border: 0;}
+.bib .pin { display: none;} .bib-top, .bib-bot { display: flex; justify-content: space-between; font-size: .8rem; color: var(--tx2);} .bib-name { font-size: 1.3rem; font-weight: 700; margin: .5rem 0;}
+.bib-num { font-size: 4.5rem; font-weight: 700; line-height: 1;} .bib-cap { margin-left: .5rem; color: var(--tx2);} .bib-mid { margin: .4rem 0 1rem;}
+.bdgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;} .bdg { text-align: center; display: grid; align-content: center; min-height: 112px; padding: 1.4rem .4rem;}
+.bdg b { font-size: 1.5rem;} .bdg span { font-size: .68rem; color: var(--tx3); line-height: 1.3;} .nextgoal { color: var(--tx2); margin-top: 1rem; font-size: .88rem;}
+.me-actions { display: grid; gap: .6rem; margin-top: 1.4rem;} .me-actions .btn { min-height: 50px; justify-content: center;}
+/* ================= รอบ 3: ปรับตามภาพหน้าจอ Kotcha จริง ================= */
+/* การ์ดกระจกโปร่ง ขอบบาง */
+.whero, .card2, .stat, .pt, .crow, .pz, .wcard, .tcard, .hweek, .hero2, .bib, .mc, .uprow, .notice, .srow, .fbline {  }
+.whero, .card2, .wcard, .tcard, .hweek, .bib, .hero2 { border-radius: 28px;}
+/* เมนูล่างแบบแคปซูลลอย */
+.view { padding-bottom: 118px;}
+/* หัวข้อส่วนแบบตัวพิมพ์ใหญ่โมโนสเปซ */
+.h2t, .vh2, .m-sec { font: 500 .78rem/1.3 ui-monospace, "Roboto Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--tx3);}
+.h2t { margin: 1.6rem 0 .7rem;} .donebtn.off { box-shadow: none;}
+/* โล่ประจำท่าซ้อม */
+.shl { position: relative; flex: none; width: 46px; height: 52px;} .shl svg { width: 100%; height: 100%; display: block;}
+.shl .chk { position: absolute; right: -4px; bottom: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;} .shl .chk svg { width: 11px; height: 11px;}
+.trow { display: flex; gap: 14px; align-items: center;} .wmeta .shl { width: 40px; height: 46px; margin-right: .2rem;}
+/* การ์ดสัปดาห์ (หน้า Home) */
+.hweek { padding: 18px 16px 12px;} .hw-top { align-items: flex-start; margin-bottom: .9rem; padding: 0 4px;}
+.hw-k { font-size: .82rem; color: var(--tx3); display: flex; align-items: center; gap: .45rem;} .dot2 { width: 7px; height: 7px; border-radius: 50%;}
+.hw-t { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em;}
+.pillb { border-radius: 999px; padding: .5rem 1.1rem; font-weight: 500;}
+.wrow { display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border: 0; border-radius: 20px; color: inherit;}
+.wr-b { display: grid; gap: .1rem; min-width: 0;} .wr-m { font-size: .82rem; color: var(--tx3);} .wr-b b { font-size: 1.05rem; font-weight: 600; line-height: 1.3;}
+.tcard { padding: 16px;} .tc-k { color: var(--tx3); font-weight: 500;}
+/* แถบสัปดาห์ในการ์ดวันแข่ง */
+.rbars { display: flex; gap: 4px; align-items: flex-end; height: 54px; margin: 1rem 0 0;}
+.rbars i { position: relative; flex: 1; border-radius: 4px; display: block; overflow: hidden; min-height: 8px;} .rbars i b { position: absolute; inset: auto 0 0 0; display: block;}
+.hero2 { min-height: 0; gap: .2rem;} .cd { margin-top: 1rem;}
+/* ================= รอบ 4: เมนูล่างกระจกใสแบบ iOS (Liquid Glass) + หน้าโค้ช ================= */
+/* หน้าโค้ช */
+.coach .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .7rem; padding: max(env(safe-area-inset-top), 10px) 16px 10px;  }
+.coach .topbar h1 { flex: 1; font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em;}
+.coach .topbar .logo.mini { border-radius: 10px;}
+.tabs { display: flex; gap: 4px; padding: 5px; margin: 14px 0; border-radius: 999px;   overflow-x: auto;}
+.tabs button { flex: 1; background: transparent; border-radius: 999px; white-space: nowrap;}
+.coach .panel, .coach .tile, .coach .wsum, .coach .pace-grid > *, .coach .tpl { border-radius: 24px;  }
+.coach .tile b { font-weight: 700;}
+.coach table { border-collapse: separate; border-spacing: 0 6px;} .coach th { color: var(--tx3); font-weight: 500; background: none;}
+/* ================= รอบ 5: ปรับตามวิดีโอ Kotcha ล่าสุด (พื้นกรมท่าเกือบดำ ฟอนต์โมโนสเปซ เมนูกระจกเข้ม) ================= */
+:root, [data-theme="dark"] { --mono: "Roboto Mono", Prompt, ui-monospace, monospace;}
+.whero, .card2, .stat, .pt, .crow, .pz, .wcard, .tcard, .hweek, .hero2, .bib, .mc, .uprow, .notice, .srow, .fbline, .dc, .coach .panel, .coach .tile, .coach .wsum, .coach .tpl, .coach .pace-grid > * {   border-radius: 20px;}
+.whero, .hero2, .bib, .wcard, .login { background-image: none;} .wrow { border: 0; border-radius: 16px;}
+/* ตัวอักษรโมโนสเปซสำหรับหัวข้อและตัวเลข */
+.vh, .h2t, .vh2, .m-sec, .wh-num, .nv, .stat b, .pt b, .cdb b, .bib-num, .hname, .wtitle, .hw-t, .tc-t, .m-title, .hero2 h2, .wh-title, .wh-stats b, .bdg b, .bib-name, .mnav b, .card2 h3, .coach .tile b, .coach .topbar h1, .khead b, .tc-k, .dh2 { font-family: var(--mono);}
+.vh { justify-content: center; text-align: center; text-transform: uppercase; font-size: 1.2rem; font-weight: 700; letter-spacing: .04em; margin: .8rem 0 1.1rem;}
+.h2t, .vh2, .m-sec, .dh2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 500; color: var(--tx2);}
+.wtitle, .hname, .hw-t, .tc-t { font-weight: 700; letter-spacing: -.01em;} .wh-num { text-shadow: none;} .pt b, .stat b, .cdb b, .bib-num { text-shadow: none;}
+/* หัวแอป: โลโก้ + ชื่อ */
+.khead { display: flex; align-items: center; gap: .55rem; padding: 2px 0 14px;} .khead img { border-radius: 8px;} .khead b { font-size: 1.15rem; font-weight: 700; letter-spacing: .05em;}
+/* เมนูล่าง: แคปซูลกระจกสีเข้ม */
+/* แถบเลือกวัน: กล่องเข้มเมื่อเลือก */
+.dy { padding: 6px 0; border-radius: 14px;}
+.dc, .dc::before { background: transparent; border: 0; box-shadow: none !important;} .dc { color: var(--tx); width: 36px; height: 30px; font-weight: 500;}
+.dc.done { color: var(--ok);} .dc.today { font-weight: 800; text-decoration: underline; text-underline-offset: 4px;} .dc.today::before, .dc.done::before { background: transparent;}
+/* แถบความคืบหน้าสีแดง */
+.sg { height: 7px;} .sg.on { background: var(--accent);} .rbars i b { background: var(--accent);}
+/* ปุ่ม: แดงเต็ม / ขาวเต็ม */
+.donebtn, .btn.primary { background: var(--accent); box-shadow: none;}
+.notice { text-align: center; padding: 2rem 1rem; color: var(--tx2);}
+.okmark { color: var(--ok);} .dot2 { background: var(--ok);}
+/* โปรไฟล์ + รายการแบบเมนูตั้งค่า */
+.who { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 14px; text-align: left; margin: .4rem 0 1.2rem;} .who .avatar { grid-row: 1 / 3; width: 64px; height: 64px; margin: 0; font-size: 1.6rem;} .who h1 { font-size: 1.15rem;} .who p { color: var(--tx3); font-size: .85rem;}
+.bib-top, .bib-bot { color: var(--tx3);} .bib-num { font-size: 3.4rem;}
+.me-actions { display: block; margin-top: 1.4rem; border-radius: 20px; overflow: hidden;}
+.me-actions .btn { display: flex; align-items: center; width: 100%; min-height: 54px; justify-content: flex-start; text-align: left; border: 0; border-radius: 0; background: transparent; padding-inline: 1rem;}
+.me-actions .btn:last-child { border-bottom: 0;} .me-actions .btn::after { content: "›"; margin-left: auto; color: var(--tx3); font-size: 1.4rem;}
+/* หน้าโค้ช */
+/* ================= รอบ 6: Liquid Glass ทั้งแอป + แสงแดงกลับมา + สีสัน ================= */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;}
+/* กระจกใส: ไล่แสงเฉียง ขอบสว่าง เงาด้านใน */
+.whero, .card2, .stat, .pt, .crow, .pz, .wcard, .tcard, .hweek, .hero2, .bib, .mc, .uprow, .notice, .login-card, .dc,
+.coach .panel, .coach .tile, .coach .wsum, .coach .tpl, .coach .pace-grid > *, .me-actions {
+   }
+.dc { background: transparent; border: 0; box-shadow: none; }
+/* การ์ดเด่น: ไล่สีเรืองแสง */
+.stats .stat:nth-child(1), .ptiles .pt:nth-child(1) { --t: 255,122,60;} .stats .stat:nth-child(2), .ptiles .pt:nth-child(2) { --t: 0,170,255;}
+.stats .stat:nth-child(3), .ptiles .pt:nth-child(3) { --t: 46,255,144;} .stats .stat:nth-child(4) { --t: 170,110,255;} .stats .stat b, .ptiles .pt b { filter: brightness(1.35);}
+/* ปุ่ม + ช่องกรอก + แผ่นล่าง */
+.donebtn, .btn.primary { border: 0;}
+.donebtn.off, .btn, .pillb, .wnav2 button, .x {  }
+.btn.primary { border: 0;}
+input, select, textarea { }
+dialog.sheet {   border-bottom: 0;}
+.coach .topbar { }
+.me-actions .btn { background: transparent; border: 0; box-shadow: none; }
+/* เหรียญ: หกเหลี่ยมตรงๆ (กล่องสี่เหลี่ยมจัตุรัส ไม่ถูกยืด) */
+.bdgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;}
+.bdg { transform: none; font-style: normal; aspect-ratio: 1 / 1.12; width: 100%; min-height: 0; padding: 0 12%; display: grid; place-content: center; text-align: center; border: 0; border-radius: 0; box-shadow: none;  clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%) !important;} .bdg b { font-size: 1.6rem; line-height: 1.1;} .bdg span { font-size: .66rem; line-height: 1.25;}
+.bdg.on b, .bdg.on span { text-shadow: none;}
+/* ===== รอบล่าสุด: รูปโปรไฟล์ / badge ความสำเร็จ / หัวแอป ===== */
+.view { padding-top: max(calc(env(safe-area-inset-top) + 10px), 22px);}
+[data-theme="light"] .logo:not(.mini) { filter: none;}
+/* รูปโปรไฟล์: วงกลมกลาง ๆ ไม่มีขอบแดง กดเพื่อเพิ่ม/เปลี่ยนรูป */
+button.avatar { position: relative; appearance: none; -webkit-appearance: none; padding: 0; margin: 0; cursor: pointer; overflow: visible;
+  width: 46px; height: 46px; flex: none; display: grid; place-items: center; border: 0 !important; box-shadow: none !important; transform: none !important; clip-path: none !important;
+  border-radius: 50% !important; font: inherit;}
+button.avatar > svg { width: 24px; height: 24px;}
+button.avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;}
+button.avatar .av-plus { position: absolute; right: -2px; bottom: -2px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;}
+button.avatar .av-plus svg { width: 11px; height: 11px;}
+button.avatar:active { opacity: .8;}
+.who button.avatar { width: 84px; height: 84px; margin: 0 auto .7rem;}
+.who button.avatar > svg { width: 40px; height: 40px;}
+.who button.avatar .av-plus { width: 26px; height: 26px;} .who button.avatar .av-plus svg { width: 15px; height: 15px;}
+.who { grid-template-columns: 1fr; justify-items: center; text-align: center;}
+/* badge ความสำเร็จ: หกเหลี่ยมด้านเท่า ขนาดเท่ากันทุกอัน ข้อความกึ่งกลางเรียงตรง */
+.bdgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; justify-items: center;}
+.bdg { width: 100%; max-width: 118px; aspect-ratio: 1 / 1.1547; min-height: 0; margin: 0; padding: 0 6px !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; border: 0; box-shadow: none; transform: none; font-style: normal;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%) !important; border-radius: 0;}
+.bdg b { display: block; margin: 0; font-size: 1.45rem; line-height: 1;}
+.bdg span, .bdg em { display: block; white-space: nowrap; text-align: center;}
+.bdg span { font-size: .64rem; line-height: 1.2;}
+.bdg em { font-style: normal; font-size: .58rem; line-height: 1.2; opacity: .8;}
+.bdg.ghost { visibility: hidden;}
+/* บัตรงานแข่ง (bib): ตั้งตรง ไม่เอียง */
+.bib { transform: none !important;}
+/* ===== ไอคอน: ชุดเดียวกันทั้งแอป (เส้นหนา 2px ปลายมน, นีออนตามระดับความหนัก) ===== */
+.shl { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--c) 45%, transparent));}
+.shl .chk { background: var(--ok);}
+button.avatar > svg { fill: none; stroke: currentColor; stroke-width: 1.8;}
+/* เพซในโปรไฟล์: แท่งสีไล่ตามความหนัก เขียว → ฟ้า → น้ำเงิน → ม่วง → ชมพู → แดง (เหมือนภาพตัวอย่าง)
+   อยากเปลี่ยนสี แก้ค่า --zc ของแต่ละโซนด้านล่างได้เลย */
+.pzbar i { background: var(--zc);}
+.pz-k { color: var(--tx);}
+/* หลังเอาช่องความสำเร็จออก: เว้นระยะระหว่างสถิติกับหัวข้อ "เพซของฉัน" */
+.stats + .vh, .stats + * + .vh { margin-top: 1.8rem;}
+/* ===== พื้นหลัง: เกรนฟิล์มบาง ๆ ทับแสงสี (ช่วยให้ไล่เฉดเนียนไม่เป็นแถบ และดูพรีเมียมขึ้น) =====
+   ปรับความเข้ม: แก้เลข ".24 0 0 0 -.08" ใน feColorMatrix (ตัวแรกยิ่งสูงยิ่งเห็นเม็ดชัด)
+   ปิดเกรน: ลบบรรทัด url("data:image/svg+xml...") แรกใน background-image ของ body::before */
+body::before {
+  background-size: 200px 200px, auto, auto, auto, auto;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;}
+/* dock ด้านล่าง: เดิมยกสูง 14px + ขอบล่างปลอดภัยของ iPhone (~34px) เมื่อติดตั้งเป็นแอป จึงลอยสูง
+   ตอนนี้หักส่วนที่ซ้ำออก ให้ dock ลอยเหนือแถบ home ของมือถือเล็กน้อยพอดี ๆ */
+.view { padding-bottom: calc(92px + max(12px, calc(env(safe-area-inset-bottom, 0px) - 12px)));}
+/* ฟอนต์ตัวเลขสไตล์สปอร์ตในภาพแชร์ (Orbitron Black, SIL OFL) */

@@ -1,0 +1,20 @@
+{
+  "name": "run-plan",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ตารางซ้อมวิ่งรายสัปดาห์สำหรับนักกีฬา",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.4",
+    "@netlify/functions": "^6.0.2"
+  },
+  "scripts": {
+    "dev": "node dev/serve.mjs",
+    "test": "node --experimental-strip-types --no-warnings test/run.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "wrangler": "^3.84.0"
+  }
+}

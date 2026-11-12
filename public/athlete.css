@@ -1,0 +1,197 @@
+/* ลูกเล่นและหน้าตาใหม่ของหน้านักกีฬา (มาจากไฟล์ดีไซน์ "K4RC Athlete App")
+   โหลดเฉพาะ index.html ต่อจาก kotcha.css หน้าโค้ช (admin.html) ไม่ได้ใช้ไฟล์นี้ จึงไม่เปลี่ยนหน้าตา
+   ชื่อคลาสใหม่ขึ้นต้นด้วย ak- เพื่อไม่ชนกับของเดิม */
+/* ---------- เอฟเฟกต์กดปุ่ม: ยุบเล็กน้อย + สว่างขึ้น + แสงวาบตรงปุ่ม ---------- */
+button { transition: transform .18s cubic-bezier(.3,1.6,.5,1), filter .18s, background .25s, box-shadow .25s; -webkit-tap-highlight-color: transparent;}
+button:active:not(:disabled) { transform: scale(.95); filter: brightness(1.25);}
+.ak-nb:active { transform: scale(.97);}
+.ak-nb, .donebtn, .btn { position: relative; overflow: hidden;}
+.ak-nb::before, .donebtn::before, .btn::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s;}
+.ak-nb:active::before, .donebtn:active::before, .btn:active::before { opacity: 1; transition: none;}
+@keyframes ak-bump { 0% { transform: scale(.7);} 60% { transform: scale(1.25);} 100% { transform: none;} }
+@keyframes ak-pop { from { opacity: 0; transform: translateY(12px) scale(.985);} to { opacity: 1; transform: none;} }
+@keyframes ak-po { to { opacity: 0; transform: translateY(8px) scale(.99);} }
+@keyframes ak-fi { from { opacity: 0;} to { opacity: 1;} }
+@keyframes ak-fo { to { opacity: 0;} }
+.donebtn.off.just { animation: ak-bump .45s;}
+/* ---------- แถบเมนูล่างแบบ Liquid Glass (iOS 26): แคปซูลแก้ว + แท่งเลือกสีเข้ม เลื่อนนุ่ม ๆ
+   กดค้าง/ลากแล้วแท่งยกขึ้นเป็นเลนส์แก้ว ขยายไอคอนข้างใต้ มีขอบรุ้ง และตามนิ้วไปได้ ปล่อยแล้วเลือกแท็บนั้น ---------- */
+/* แท่งเลือกตอนปกติ: กระจกเข้ม */
+/* เลนส์ (โผล่ตอนกดค้าง/ลาก) */
+/* แถวไอคอนสำเนา ขยาย 1.25 เท่า สีเด่น อยู่ใต้เลนส์เท่านั้น */
+/* ---------- การ์ดกระจก + ปุ่มกลม + ปุ่มเมนูแบบไอคอน ---------- */
+.ak-g { border-radius: 20px; padding: 14px; margin-bottom: 12px;
+   }
+.ak-m { font-family: var(--mono);}
+.sx { font-size: .82rem;}
+.ak-row { display: flex; align-items: center; gap: 10px;} .ak-sb { justify-content: space-between;}
+.ak-w { width: 100%;}
+.ak-rb { position: relative; width: 44px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border-radius: 50%; font-size: 1.4rem; line-height: 1;}
+.ak-rb svg { width: 22px; height: 22px;}
+.ak-dot { position: absolute; top: 7px; right: 7px; width: 9px; height: 9px; border-radius: 50%;}
+.ak-hb { display: flex; align-items: center; gap: 8px;}
+.hhead button.avatar { width: 44px; height: 44px;}
+.ak-nb { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 12px; margin-bottom: 10px; border-radius: 22px; text-align: left;}
+.ak-ni { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none;}
+.ak-ni svg { width: 22px; height: 22px;}
+.ak-nt { flex: 1; min-width: 0; display: grid; gap: 1px;} .ak-nt b { font-weight: 600;}
+.ak-nt span { font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.ak-na { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 1.2rem;}
+.ak-cx { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 999px; font-size: .82rem;}
+.ak-cxr { display: flex; gap: 3px;} .ak-cxr.five { gap: 5px;} .ak-cxr.wrap { flex-wrap: wrap; gap: 6px;}
+.ak-cxr:not(.wrap) .ak-cx { flex: 1; padding: 0; min-width: 0;}
+.ak-rg { display: flex; gap: 8px; margin-bottom: 12px;} .ak-rg .ak-cx { flex: 1; padding: 0 8px;}
+.ak-h { font: 500 .8rem var(--mono); text-transform: uppercase; letter-spacing: .06em; margin: 14px 2px 8px;}
+.ak-h b { font-weight: 600; text-transform: none; letter-spacing: 0; margin-left: .4rem;}
+/* ---------- ข้อมูลในการ์ดวัน (หน้าแผน) ---------- */
+.ak-meta { display: flex; justify-content: space-between; gap: 8px; margin: 10px 0 14px; font-size: .88rem;}
+.ak-meta b { font-family: var(--mono); font-weight: 600; margin-right: .25rem;}
+.wcard .graph { height: 64px; margin: .6rem 0 0;}
+.ak-pwk { padding: 12px;} .ak-pwk .strip { margin: .6rem 0 .2rem;}
+.ak-wk-sum { display: flex; justify-content: space-between; gap: 8px; margin: .5rem 4px 0; font-size: .82rem;}
+.ak-wk-sum b { font-family: var(--mono);}
+.ak-doneRow { display: grid; gap: .5rem; margin: .8rem 0 .4rem;}
+/* ---------- กราฟแท่งรายสัปดาห์ (หน้าสถิติ + หน้างานแข่ง) ---------- */
+.ak-bars { display: flex; align-items: stretch; gap: 7px; margin-top: 10px;}
+.ak-bc { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end;}
+.ak-bt { position: relative; overflow: hidden; border-radius: 5px; min-height: 8px;}
+.ak-bt i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 5px; transition: height .6s cubic-bezier(.3,1.2,.5,1);}
+.ak-bc span { margin-top: 5px; min-height: .9rem; text-align: center; font: 500 .6rem var(--mono); color: var(--tx3); white-space: nowrap;}
+.ak-bars.many .ak-bc span { visibility: hidden;} .ak-bars.many .ak-bc.now span, .ak-bars.many .ak-bc:first-child span { visibility: visible;}
+/* ---------- หน้าต่างย่อยแบบกระจก (เปิดซ้อนกันได้ มีปุ่มย้อนกลับ) ---------- */
+body:has(dialog.ak-gm[open]) { overflow: hidden;}
+dialog.ak-gm { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; border-radius: 0; overflow: hidden; background: transparent;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); align-items: center; justify-content: center;}
+dialog.ak-gm[open] { display: flex;}
+dialog.ak-gm::backdrop { animation: ak-fi .18s ease-out both;}
+dialog.ak-gm.out::backdrop { animation: ak-fo .16s ease-in both;}
+.ak-md { width: 100%; max-width: 440px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; scrollbar-width: none; padding: 16px; border-radius: 32px;
+   animation: ak-pop .28s cubic-bezier(.2,.8,.2,1) both;}
+.ak-md::-webkit-scrollbar { display: none;}
+.ak-md.still { animation: none;}
+dialog.ak-gm.out .ak-md { animation: ak-po .18s ease-in both;}
+.ak-md .ak-g, .ak-md .pz, .ak-md .pt, .ak-md .srow, .ak-md .fbline, .ak-md .stat {  }
+.ak-mh { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;}
+.ak-mh h1, .ak-mh h2 { flex: 1; margin: 0; text-align: center; font: 700 1rem var(--mono); text-transform: uppercase; letter-spacing: .04em;}
+.ak-mh.left h1, .ak-mh.left h2 { text-align: left; font-size: 1.05rem; text-transform: none; letter-spacing: 0;}
+.ak-mh .sx { font-size: .8rem; margin-top: 2px; font-family: var(--font); text-transform: none; letter-spacing: 0; font-weight: 500;}
+.ak-sp { width: 44px; flex: none;}
+.ak-md .ak-foot { display: flex; gap: 8px; margin-top: 18px;} .ak-md .ak-foot .btn { flex: 1; min-height: 46px;}
+.ak-md .ak-foot .btn.primary { flex: 2;}
+.ak-md textarea { width: 100%; margin-top: .3rem;}
+.ak-md .legend-row { display: flex; align-items: center; gap: 12px; padding: 11px 0;} .ak-md .legend-row:last-child { border-bottom: 0;}
+.ak-md .legend-row i { width: 9px; height: 9px; border-radius: 50%; flex: none;}
+.ak-md .legend-row .sx { display: block;}
+/* นับถอยหลังในหน้าต่างงานแข่ง */
+/* รายการเวิร์คเอาต์ในหน้าต่างสัปดาห์ */
+.ak-wr { display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; padding: 10px 4px; color: inherit; border: 0; background: none; border-radius: 0;}
+.ak-wr:last-child { border-bottom: 0;} .ak-wr.dn { opacity: .78;}
+.ak-wr .shl { width: 38px; height: 43px;} .ak-wr .shl .chk { width: 17px; height: 17px; right: -3px;} .ak-wr .shl .chk svg { width: 10px; height: 10px;}
+.ak-wr > span:last-child { display: grid; gap: 2px; min-width: 0;} .ak-wr .sx { font-size: .8rem;}
+.ak-wr em { font-style: normal; font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+/* ข้อความจากโค้ช */
+.ak-msg .sx { margin-bottom: 4px;} .ak-msg b { font-weight: 600; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;}
+/* เทียบสัปดาห์ */
+.ak-cmp .ln { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0;}
+.ak-cmp .ln:last-child { border-bottom: 0;} .ak-cmp .ln b { font-family: var(--mono);} .ak-cmp .up { color: var(--ok);}
+/* ไอคอนเมนูในโปรไฟล์ */
+.ak-navs { margin-top: 1.1rem;}
+.ak-navs .btn { margin-bottom: 10px; min-height: 52px;}
+@media (prefers-reduced-motion: reduce) {
+  .ak-md, dialog.ak-gm::backdrop, .tb svg, .donebtn.off.just { animation: none !important;}
+  .tabbar, .tabbar .ind, .lens-g, button, .ak-bt i { transition-duration: .01ms !important;}
+}
+.ak-bc { height: 100%;}
+.ak-rb:disabled { opacity: .35;}
+.wcard .ak-nb { margin: 12px 0 0;}
+/* ---------- ฟอร์ม ช่องกรอก แชร์ภาพ โปรไฟล์ ---------- */
+[hidden] { display: none !important;}
+.ak-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+.ak-fld { display: grid; gap: 4px; min-width: 0;} .ak-fld input { width: 100%; min-width: 0;}
+.ak-md input[type="range"] { width: 100%; padding: 0;}
+.ak-shc { display: block; margin: 0 auto; width: auto; height: auto; max-width: 100%; max-height: 52vh; max-height: 52dvh; border-radius: 18px;}
+.ak-shc.drag { touch-action: none; cursor: grab;}
+.ak-bignum { font: 700 2.4rem var(--mono); line-height: 1.1;}
+.ak-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; margin-top: 10px;}
+.ak-cell { text-align: center; padding: 10px 4px; border-radius: 14px;}
+.ak-cell b { display: block; font: 700 1.05rem var(--mono);} .ak-cell span { font-size: .72rem;}
+.ak-line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0;} .ak-line:last-of-type { border-bottom: 0;}
+.ak-line b { font-weight: 600; text-align: right;}
+.ak-meds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;}
+.ak-med { display: grid; justify-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; text-align: center; font-size: .72rem; line-height: 1.25;}
+.ak-med svg { width: 26px; height: 26px;}
+/* ---------- หน้าแรก: แถบสัปดาห์ + ฟีดทีม 24 ชม. ---------- */
+.hstrip { padding: 14px 12px;}
+.hs-top { display: flex; align-items: center; gap: 10px;}
+.hs-fl { flex: none; width: 58px; display: grid; justify-items: center; text-align: center; line-height: 1.1;}
+.hs-fl svg { width: 36px; height: 36px;}
+.hs-fl b { margin-top: 2px; font: 700 1.35rem var(--mono);}
+.hs-fl span { font-size: .7rem; font-weight: 600;}
+.hs-days { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;}
+.hs-d { display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--tx3); font-size: .74rem; font-weight: 500;}
+.hs-d:disabled { opacity: .6;}
+.hs-c { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: .82rem; font-weight: 600;}
+.hs-c svg { width: 16px; height: 16px;}
+.hs-c.miss { opacity: .45;}
+.fp-sub { margin: -.3rem 2px .8rem;}
+.fp { position: relative; overflow: hidden; padding: 16px; margin-bottom: 12px; border-radius: 24px; background: var(--bg2);}
+.fp-h { display: flex; align-items: center; gap: 12px;}
+.fav { width: 46px; height: 46px; flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--bg4); font-weight: 700; font-size: .95rem;}
+.fav img { width: 100%; height: 100%; object-fit: cover; display: block;}
+.fp-who { flex: 1; min-width: 0; display: grid; gap: 1px;} .fp-who b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+.fp-exp { flex: none; align-self: flex-start; font-size: .72rem; color: var(--tx3);}
+.fp-t { margin: 14px 0 0; font-size: 1.25rem; font-weight: 700; line-height: 1.3;}
+.fp-n { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 12px;}
+.fp-n .sx { display: block;} .fp-n b { font-size: 1.45rem; font-weight: 700;} .fp-n small { font-size: .78rem; font-weight: 500; color: var(--tx2);}
+.fp-f { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 14px;}
+.fp-r { display: grid; gap: 6px; min-width: 0;}
+.fp-m { display: flex; gap: 3px;} .fp-m i { width: 11px; height: 7px; border-radius: 2px;} .fp-m i.on { background: var(--c);}
+.fp-feel { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: .78rem; font-weight: 600;}
+.fp-feel i { width: 8px; height: 8px; border-radius: 50%; background: var(--f);}
+.fp-life { height: 3px; margin-top: 14px; border-radius: 3px; overflow: hidden;} .fp-life i { display: block; height: 100%; background: var(--c); opacity: .8;}
+/* ---------- โปรไฟล์แบบ Strava: หัวโปรไฟล์ แท็บ ความก้าวหน้า ---------- */
+.pf-top { display: flex; align-items: center; gap: 16px; margin: .4rem 0 1rem;}
+.pf-top button.avatar { width: 88px; height: 88px; margin: 0; flex: none; font-size: 1.9rem;}
+.pf-top button.avatar > svg { width: 40px; height: 40px;}
+.pf-top button.avatar .av-plus { width: 26px; height: 26px;} .pf-top button.avatar .av-plus svg { width: 15px; height: 15px;}
+.pf-id { min-width: 0;} .pf-id h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere;} .pf-id p { color: var(--tx2); margin-top: 2px;}
+.pf-fire { display: flex; align-items: center; gap: 6px; font-weight: 600;} .pf-fire span { width: 20px; height: 20px; display: block;} .pf-fire svg { width: 100%; height: 100%;}
+.pf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;} .pf-btns .btn { min-height: 46px;}
+.pf-tabs { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 -4px 14px;}
+.pf-tab { display: grid; justify-items: center; gap: 4px; padding: 10px 0 8px; min-height: 56px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--tx3); font-size: .74rem; font-weight: 600; border-radius: 0;}
+.pf-tab svg { width: 24px; height: 24px;}
+.pg { padding: 16px; margin-bottom: 12px; border-radius: 24px; background: var(--bg2);}
+.pg-t { margin: 18px 0 10px; font-size: 1.3rem; font-weight: 700;}
+.pg-n { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 6px 28px;} .pg-n .sx { display: block;} .pg-n b { font-size: 1.5rem; font-weight: 700;} .pg-n small { font-size: .78rem; font-weight: 500; color: var(--tx2);}
+.pgc { display: block; width: 100%; height: auto; margin: 6px 0 12px;} .pgc text { font: 500 10.5px var(--font);} .pgc rect { cursor: pointer;}
+.pg .btn { min-height: 48px;}
+.pg-sh { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0; border: 0; background: none; font-size: 1.1rem;}
+.pg-st { display: flex; align-items: center; gap: 14px; margin: 12px 0 14px;} .pg-fl { width: 44px; height: 44px; flex: none;} .pg-fl svg { width: 100%; height: 100%;}
+.md-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 0; justify-items: center; align-items: center;}
+.md-h { font-size: .68rem; color: var(--tx3);}
+.md2 { width: 14px; height: 14px; border-radius: 50%;}
+.ak-wr b { font-size: 1rem; font-weight: 600; line-height: 1.3;}
+/* ---------- โทนดำล้วน + การ์ดทึบ ใช้ทุกหน้า (แทนการ์ดกระจกเดิม) ---------- */
+body::before, body::after { display: none !important;}
+.ak-g, .tcard, .wcard, .ak-nb { border-radius: 24px;}
+.ak-cx[hidden] { display: none !important;}
+/* ป้ายชื่อแท็บให้หนาอ่านง่ายเหมือน iOS + พื้นผิวแถบกระจกมีประกายด้านบน */
+/* ตอนเลนส์ยกขึ้น แท็บอื่นเป็นสีขาวหมด (เหมือน iOS) สีเด่นอยู่เฉพาะใต้เลนส์ */
+/* ================= แถบเมนูล่าง v2: เล็กลง นุ่มขึ้น ไม่มีเอฟเฟกต์แรง ================= */
+/* เปลี่ยนหน้า: เลื่อนเข้านิด ๆ + จางเข้า */
+@keyframes pgin { from { opacity: 0; transform: translateX(var(--dx, 0px));} to { opacity: 1; transform: none;} }
+.view.pgin { animation: pgin .3s var(--ease, cubic-bezier(.25,.8,.3,1));}
+@media (prefers-reduced-motion: reduce) { .view.pgin { animation: none;} }
+/* รายละเอียดเพิ่มเติมในหน้า "ซ้อมเป็นอย่างไรบ้าง" พับเก็บ */
+.fb-more { margin-top: 12px; border-radius: 16px; background: var(--bg3); padding: 0 14px;}
+.fb-more > summary { list-style: none; cursor: pointer; padding: 14px 0; font-weight: 600; display: flex; flex-direction: column; gap: 2px; min-height: 44px;}
+.fb-more > summary::-webkit-details-marker { display: none;}
+.fb-more > summary::after { content: "›"; position: absolute; right: 28px; margin-top: 6px; transform: rotate(90deg); color: var(--tx3); font-size: 1.3rem;}
+.fb-more[open] > summary::after { transform: rotate(-90deg);}
+.fb-more { position: relative; padding-bottom: 6px;}
+.fb-more .ak-h:first-of-type { margin-top: 4px;}
+/* ข้อความแจ้งเตือนสั้น ๆ ลอยเหนือแถบเมนู */
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 60; display: flex; align-items: center; gap: 12px; max-width: min(92%, 420px); padding: 10px 12px 10px 16px; border-radius: 999px; font-size: .9rem; animation: toast-in .28s var(--ease, ease) both;}
+.toast button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 0; font-weight: 700;}
+.toast.out { opacity: 0; transition: opacity .25s;}
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px);} to { opacity: 1; transform: translate(-50%, 0);} }

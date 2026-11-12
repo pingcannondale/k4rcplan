@@ -1,0 +1,278 @@
+/* K4RC · ธีม "Night Map" (โหลดหลังสุดของทุกไฟล์) ใช้ได้ทั้งหน้านักกีฬาและหน้าโค้ช
+   พื้นหลัง = ภาพดาวเทียมขาวดำ + เส้นเส้นทางสีส้ม  สีเน้น = ส้มเส้นทาง #ee3b2b
+   ลบไฟล์นี้ออกจาก <link> ของ index.html / admin.html เพื่อกลับไปธีมสว่างเดิม
+   หลักการด้านความเร็วเหมือนเดิม: เบลอเฉพาะ Dock / หน้าต่างลอย / ข้อความแจ้งเตือน การ์ดทั่วไปไม่เบลอ */
+
+:root,[data-theme]{
+  --bg:var(--pg);--bg2:rgba(43,44,48,.7);--bg3:rgba(255,255,255,.06);--bg4:rgba(255,255,255,.1);--card:rgba(43,44,48,.7);
+  --tx:#f4f1ec;--tx2:#c4c0b9;--tx3:#8f8b84;
+  --bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.18);--lane:rgba(255,255,255,.07);
+  --run:#ee3b2b;--run-g:rgba(238,59,43,.16);--strength:#a58bff;--strength-g:rgba(165,139,255,.16);--rest:#8f98a8;--rest-g:rgba(143,152,168,.16);
+  --race:#ffc247;--race-g:rgba(255,194,71,.18);--bike:#3ddc97;--bike-g:rgba(61,220,151,.16);--swim:#4cc2ff;--swim-g:rgba(76,194,255,.16);--brick:#ff6fa5;--brick-g:rgba(255,111,165,.16);
+  --accent:#ee3b2b;--accent-g:rgba(238,59,43,.18);--on-accent:#fff;--co:#f4503a;
+  --ok:#3ddc97;--bad:#ff5c7a;--warn:#ffc247;--ice:#4cc2ff;--chalk:#fff;--danger:#ff5c7a;
+  --lv0:#4cc2ff;--lv1:#ffc247;--lv2:#ee3b2b;--rest-bar:#3a3d44;--shadow:rgba(0,0,0,.5);
+  --glass:0 10px 30px rgba(0,0,0,.45);color-scheme:dark;
+  --xt2:#c4c0b9;--xcd:rgba(43,44,48,.7);--xbd:rgba(255,255,255,.09);--xsh:0 10px 30px rgba(0,0,0,.45);--xco:#ee3b2b;
+  --pane:rgba(15,16,19,.9);--hair:rgba(255,255,255,.08);--ink:#f4f1ec}
+
+/* ---------- พื้นหลังแผนที่ ---------- */
+html{background:var(--pg)}
+body,body:not([data-tab="me"]),body.coach{background:transparent!important;color:var(--tx)}
+body::before,body:not([data-tab="me"])::before{display:none!important}
+html::after{content:none}
+.login{background:none!important}
+
+/* ---------- ตัวอักษร ---------- */
+.xv,.xv h1,.xv h2,.xv .hname,.xv .h2t,.xv .xbx b,.xv .xch b,.xv .xsum b,.xv .hs-c,.coach .xhead h1,.coach .cw .cn,.coach .tile b,.xs .xk h2,.xs-h h2,.xs .mnav b{color:var(--tx)}
+.xm,.xlb,.xv .fp-sub,.xv .hhead .muted,.xv .hs-d,.xv .hs-fl span,.xbx span,.xch,.xsum,.coach .xhead .xm,.coach .cw .cm,.coach .tile span,.xs-h .xm,.xs .pz-k,.xs .mh,.xs .mcal .mk,.xs .ak-h,.xs .sx,.xs .note{color:var(--tx2)}
+.xs .pz-v.none{color:var(--tx3)}
+.xwarn{color:var(--warn)}
+
+/* ---------- การ์ด ---------- */
+.xk,.whero,.card2,.stat,.pt,.crow,.pz,.login-card,.wcard,.tcard,.hweek,.ak-g,.ak-nb,.srow,.fbline,.hstrip,.pg,.fp,.ac,.xv .hstrip,.me-actions,
+.coach .tile,.coach .dcard,.coach .dcar,.coach .dtable,.coach .arow,.coach .wsum,.coach .calc,.coach .tpl,.coach .pace-grid>*,.coach details,.coach .addrow,.coach .login-card{
+  background:var(--bg2);border:1px solid var(--hair);box-shadow:var(--glass),inset 0 1px 0 rgb(var(--fg)/.05);color:var(--tx)}
+.whero,.hero2,.bib{background:linear-gradient(160deg,rgba(238,59,43,.16),rgb(var(--c1rgb)/.8) 60%);color:var(--tx)}
+.wcard{background:linear-gradient(180deg,color-mix(in srgb,var(--c,#ee3b2b) 14%,rgb(var(--c1rgb)/.85)),rgb(var(--c1rgb)/.8))}
+.coach .tile{border-top:1px solid var(--hair)}
+.coach .arow{border-top:1px solid var(--hair)}
+.coach .arow details,.coach .calc{background:rgb(var(--fg)/.04);border:1px solid var(--hair);box-shadow:none}
+.wh-stats,.wrow,.cp,.srow,.fbline,.ak-cell,.fp-feel,.fp-life{background:rgb(var(--fg)/.05)}
+.xbx{background:rgb(var(--fg)/.07)}
+.xgauge{background:linear-gradient(160deg,rgba(238,59,43,.34),rgb(var(--c1rgb)/.88));border-color:rgba(255,120,60,.3);color:#fff}
+.xgauge svg *{vector-effect:none}
+.xdnp{background:rgba(61,220,151,.16);color:var(--ok)}
+.xsd{background:rgb(var(--fg)/.06)}
+.xpl{background:rgb(var(--fg)/.08);border:1px solid var(--hair);color:var(--tx)}
+.ak-rb{background:rgb(var(--fg)/.08);border:1px solid var(--hair);color:var(--tx);box-shadow:none}
+
+/* ---------- ปุ่ม ---------- */
+.btn,.pillb,.x,.pill,.scale button,.chip span,.tabs button,.plus,.cempty,.wnav button,.wnav2 button,.donebtn.off,.pill{
+  background:rgb(var(--fg)/.07);border:1px solid var(--hair);box-shadow:none;color:var(--tx)}
+.btn:not(.primary):not(:disabled):hover,.pill:hover,.scale button:hover,.chip:hover span,.x:hover,.wnav button:not(:disabled):hover,.donebtn.off:hover{background:rgb(var(--fg)/.13)}
+.btn.primary,.donebtn,.xbtn,.login-card .btn.primary,.coach .btn.primary,.xs .ak-foot .btn.primary{
+  background:linear-gradient(180deg,#f4503a,#e0331f);border:0;color:#fff;text-shadow:none;box-shadow:inset 0 1px 0 rgb(var(--fg)/.35),0 8px 24px rgba(238,59,43,.38)}
+.donebtn.off{color:var(--tx);box-shadow:none}
+.btn.danger,.coach .btn.danger{color:var(--danger);background:rgba(255,92,122,.12);border:0}
+.xbtn.w,.xs .xbtn.w{background:rgb(var(--fg)/.1);color:var(--tx);box-shadow:none;border:1px solid var(--hair)}
+.xci,.xci.sm,.xs .xci,.xs .xci.sm{background:rgb(var(--fg)/.08);border:1px solid var(--hair);box-shadow:none;color:var(--tx)}
+.pill[aria-pressed="true"],.scale button[aria-pressed="true"],.chip input:checked+span,.tabs button[aria-selected="true"],.pills .pill[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent}
+.coach .btn.sm{background:rgb(var(--fg)/.08);color:var(--tx)}
+.coach .xout{background:rgb(var(--fg)/.07);color:var(--tx2)}
+.xsg{background:rgb(var(--fg)/.08)}
+.xsg button{background:transparent;color:var(--tx2)}
+.xsg button[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(238,59,43,.35)}
+
+/* ---------- ช่องกรอก ---------- */
+input,select,textarea,.ak-fld input,.ak-md textarea,.ak-md input,.ak-md select{background:rgb(var(--fg)/.07);border:1px solid var(--bd2);color:var(--tx)}
+input::placeholder,textarea::placeholder{color:var(--tx3)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(238,59,43,.22)}
+select option{background:var(--c1);color:var(--tx)}
+:focus-visible{outline:2px solid var(--accent)}
+.sg{background:rgb(var(--fg)/.12)}.sg.on{background:var(--c)}
+
+/* ---------- โลโก้ ---------- */
+.hlogo,.login-card .logo,.xv h1.x-brand::before{background:linear-gradient(100deg,var(--link) 0%,#f4503a 40%,#ee3b2b 100%);filter:drop-shadow(0 2px 10px rgba(238,59,43,.4))}
+
+/* ---------- Dock ---------- */
+.tabbar,.coach .tabs{background:linear-gradient(160deg,rgb(var(--fg)/.12),rgb(var(--fg)/.02) 60%),rgb(var(--c1rgb)/.72);border:1px solid rgb(var(--fg)/.14);
+  box-shadow:inset 0 1px 0 rgb(var(--fg)/.14),0 14px 36px rgb(0 0 0/calc(.6*var(--shk)));backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5)}
+.tabbar .tb,.coach .tabs button{color:var(--dockic)}
+.tabbar .tb[aria-current="page"],.coach .tabs button[aria-selected="true"]{color:#fff}
+.tabbar .tb svg,.coach .tabs svg.ic{filter:none}
+.tabbar .gl,.coach .tabs .ind{background:linear-gradient(180deg,#f4503a,#e0331f);box-shadow:inset 0 1px 0 rgb(var(--fg)/.35),0 4px 18px rgba(238,59,43,.5)}
+@media (min-width:900px){
+ .coach .tabs{background:var(--bg2);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .coach .tabs button:hover{background:rgb(var(--fg)/.07)}
+ .coach .tabs button{color:var(--tx2)}
+ .coach .topbar,.coach .xcn{background:rgb(var(--c1rgb)/.78);border:1px solid var(--hair);box-shadow:var(--glass)}
+ .coach .xcn .tabs{background:none;border:0;box-shadow:none}
+ .coach .xbrand span{color:var(--tx2)}
+}
+.coach .topbar{background:linear-gradient(180deg,rgb(var(--pgrgb)/.92),rgb(var(--pgrgb)/.7))}
+@media (min-width:900px){.coach .topbar{background:rgb(var(--c1rgb)/.78)}}
+
+/* ---------- หัวหน้าแรก / แถบสัปดาห์ ---------- */
+.hs-fl,.xv .hs-fl,.hs-fl svg{color:var(--co)}
+.xv .hs-fl b,.hs-fl b{color:var(--tx)}
+.xv .hs-c,.hs-c{background:rgb(var(--fg)/.08);color:var(--tx);border:0}
+.xv .hs-c.done,.hs-c.done{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(238,59,43,.4)}
+.xv .hs-c.now,.hs-c.now{background:transparent;box-shadow:inset 0 0 0 2px var(--tx)}
+.xv .hs-c.done.now{background:var(--accent);box-shadow:0 0 0 2px var(--pg),0 0 0 3.5px var(--tx)}
+.xv .hs-c.part,.hs-c.part{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.xv .hs-c.miss,.hs-c.miss{background:rgba(255,92,122,.16);color:var(--bad-tx)}
+.xch{background:rgb(var(--fg)/.07);color:var(--tx2)}
+.xch.td{box-shadow:inset 0 0 0 1.5px var(--tx)}
+.xch.to{background:var(--accent);color:#fff}.xch.to b{color:#fff}
+.xch.dn i{background:var(--ok)}
+.xpg,.xs .pzbar{background:rgb(var(--fg)/.1)}
+.dc{background:rgb(var(--fg)/.07);border:1px solid var(--hair);color:var(--tx)}
+.dc.done{color:var(--ok)}.dc.done::before{background:rgba(61,220,151,.18)}
+.dc.today{color:#fff}.dc.today::before{background:var(--accent);border-color:var(--accent)}
+.dy.sel{background:rgb(var(--fg)/.08)}.dy.sel .dc::before{box-shadow:0 0 0 2px var(--pg),0 0 0 4px var(--co)}
+.mc.ok,.xs .mcal .mc.ok{background:rgba(61,220,151,.2)}.mc.bad,.xs .mcal .mc.bad{background:rgba(255,92,122,.2)}
+.mc.today{box-shadow:inset 0 0 0 1.5px var(--tx)}.xs .mcal .mc.today{outline:2px solid var(--accent)}
+.crow.now,.crow.sel{box-shadow:inset 0 0 0 1.5px rgba(238,59,43,.6),var(--glass)}
+.vb i.p,.rbars i,.ak-bt{background:rgb(var(--fg)/.12)}
+.rbars i.cur,.ak-bc.now .ak-bt{box-shadow:0 0 0 1.5px var(--tx)}
+.ak-bc.now span{color:var(--tx)}
+.sn,.wmeta .sn{color:var(--ic,var(--c,var(--tx)));background:color-mix(in srgb,var(--ic,var(--c,#8f98a8)) 20%,transparent)}
+.okmark{background:var(--ok);color:#06130d}.prio{background:var(--co);color:#fff}.link{color:var(--link)}
+.ak-dot{background:var(--co);box-shadow:0 0 0 2px var(--pg)}.ak-na{background:rgb(var(--fg)/.07);border:1px solid var(--hair);color:var(--tx2)}
+.sx,.ak-meta,.ak-nt span,.ak-wk-sum,.ak-wr em,.ak-cell span,.dsub,.legend,.feed .meta,.prog,.wsum,.pf-tab{color:var(--tx3)}
+.ak-meta b,.ak-wk-sum b,.pf-tab[aria-selected="true"],.pf-fire,.pg-sh,.fav{color:var(--tx)}
+.pf-tab[aria-selected="true"]{border-bottom-color:var(--co)}
+.pgc text{fill:var(--tx3)}
+.md2{background:rgb(var(--fg)/.12)}.md2.on{background:var(--co)}.md2.now{box-shadow:0 0 0 2px var(--pg),0 0 0 3.5px var(--tx)}
+.bdg{background:rgb(var(--fg)/.07)}
+.ak-med{color:var(--tx3);background:rgb(var(--fg)/.05);border:1px dashed rgb(var(--fg)/.2)}
+.ak-med.on{color:var(--tx);border:1px solid rgba(238,59,43,.55);background:linear-gradient(135deg,rgba(238,59,43,.26),rgba(238,59,43,.06))}.ak-med.on svg{color:var(--co)}
+button.avatar{color:var(--tx2);background:rgb(var(--fg)/.1)}button.avatar .av-plus{background:var(--accent);color:#fff;box-shadow:0 0 0 2px var(--pg)}
+.fp.mine{box-shadow:inset 0 0 0 1.5px rgba(238,59,43,.55),var(--glass)}.fp-m i{background:rgb(var(--fg)/.12)}
+.shl .chk{border-color:var(--pg)}
+.ak-line,.ak-wr,.ak-cmp .ln,.ak-md .legend-row,.me-actions .btn,.xrow+.xrow,.xs .ak-cmp .ln,.xs .pz+.pz{border-color:var(--hair)}
+.ak-cmp .dn2{color:var(--bad-tx)}.ak-msg.new{box-shadow:0 0 0 1.5px rgba(238,59,43,.6),var(--glass)}
+.ak-shc{border:1px solid var(--hair);box-shadow:0 10px 30px rgb(0 0 0/calc(.5*var(--shk)))}
+.dot2{background:var(--ice)}
+.pz{--zc:#4cc2ff}.pz-e{--zc:#3ddc97}.pz-lt1{--zc:#4cc2ff}.pz-lt2{--zc:#ffc247}.pz-marathon{--zc:#ff7a45}.pz-k5{--zc:#ff5c7a}.pz-vo2max{--zc:#ff6fa5}.pz-r{--zc:#a58bff}
+
+/* ---------- ข้อความแจ้งเตือน ---------- */
+.toast{background:rgb(var(--c1rgb)/.9);border:1px solid rgb(var(--fg)/.14);color:var(--tx);box-shadow:0 12px 32px rgb(0 0 0/calc(.6*var(--shk)))}
+.toast button{background:var(--accent);color:#fff}
+
+/* ---------- หน้าต่างลอย (กระจกควันดำ) ---------- */
+dialog::backdrop,dialog.ak-gm::backdrop,dialog.ak-gm.xs::backdrop,.coach dialog#wdlg::backdrop{background:rgba(4,5,7,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+dialog.ak-gm,.ak-md,.ak-md.xs,dialog.sheet,.coach dialog#wdlg{color:var(--tx)}
+.ak-md,.ak-md.xs,dialog.sheet,.coach dialog#wdlg{background:linear-gradient(180deg,rgb(var(--c1rgb)/.82),rgb(var(--c1rgb)/.9));border:1px solid rgb(var(--fg)/.14);
+  box-shadow:inset 0 1px 0 rgb(var(--fg)/.1),0 28px 70px rgb(0 0 0/calc(.7*var(--shk)));backdrop-filter:blur(30px) saturate(1.5);-webkit-backdrop-filter:blur(30px) saturate(1.5)}
+.xs .xk,.xs .xpl,.xs .ak-g,.xs .ak-nb,.xs .mcal,.xs .fb-more,.ak-md .ak-g,.ak-md .stat,.ak-md .pz,.ak-md .pt,.ak-md .srow,.ak-md .fbline,.coach .ewo{
+  background:rgb(var(--fg)/.06);border:1px solid var(--hair);box-shadow:none;color:var(--tx)}
+.xs .ptiles .pt{background:rgb(var(--fg)/.08);border:0}
+.xs .mnav .ak-rb{background:rgb(var(--fg)/.08);border:1px solid var(--hair)}
+.xs .ak-foot .btn:not(.primary){background:rgb(var(--fg)/.09);border:1px solid var(--hair);color:var(--tx);box-shadow:none}
+.xs .ak-fp,.ak-fp,.xs .ak-cx,.ak-cx{background:rgb(var(--fg)/.07);border:1px solid var(--hair);box-shadow:none;color:var(--tx)}
+.xs .ak-cx[aria-pressed="true"],.ak-cx[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 8px 22px rgba(238,59,43,.4)}
+.ak-fp .lv s{background:rgb(var(--fg)/.2)}
+.ak-fp .lv s.a{background:hsl(var(--h),75%,58%)}
+.ak-fp.on{background:hsl(var(--h),72%,46%);color:#fff;box-shadow:0 8px 20px hsla(var(--h),72%,46%,.45)}
+.ak-fp.on .lv s{background:rgb(var(--fg)/.4)}.ak-fp.on .lv s.a{background:#fff}
+.coach .m-head,.coach .m-foot{border-color:var(--hair)}.coach .m-title{color:var(--tx)}.coach .m-date,.coach .m-sec{color:var(--tx3)}
+.coach .panel h2,.coach .topbar h1,.coach .tile b{color:var(--tx)}
+.coach .tile.good b{color:var(--ok)}.coach .tile.bad b{color:var(--danger)}.coach .tile.warn b{color:var(--warn)}
+.coach .dhead{color:var(--tx3);border-bottom-color:var(--hair)}
+.coach .drow{border-top-color:var(--hair);color:var(--tx)}.coach .drow:hover{background:rgb(var(--fg)/.05)}
+.coach .cw{background:rgb(var(--fg)/.06);border:1px solid var(--hair);border-left:3px solid var(--c);color:var(--tx)}
+.coach .cw .cok{color:var(--ok)}
+.coach .cw.miss{box-shadow:inset 0 0 0 1.5px rgba(255,92,122,.5)}
+.dd{border-color:rgb(var(--fg)/.3)}.dd.done{background:var(--accent);border-color:var(--accent)}.dd.today{background:var(--tx);border-color:var(--tx)}
+.hs{background:var(--c3)}.hs.h0{background:#ff5c7a}.hs.h1{background:#ffc247}.hs.h2{background:#3ddc97}
+.bd{background:rgb(var(--fg)/.09);color:var(--tx2)}.bd.bad{background:rgba(255,92,122,.18);color:var(--bad-tx)}.bd.warn{background:rgba(255,194,71,.18);color:var(--warn-tx)}
+.fbbox{background:rgba(61,220,151,.14);color:var(--tx)}
+.feed+.feed{border-top-color:var(--hair)}
+.login-card{background:rgb(var(--c1rgb)/.82)}
+
+/* ---------- เอฟเฟกต์ระดับกลาง: เส้นส้มบางๆ ตามขอบการ์ดหลักบนหน้าแรก ---------- */
+.xv .hstrip{border-color:rgba(238,59,43,.22)}
+@media (prefers-reduced-motion:reduce){html::after{transition:none}}
+/* อ่านง่ายเมื่อทับแผนที่ */
+.btn,.pillb,.x,.pill,.xci,.xci.sm{background:rgb(var(--c1rgb)/.62)}
+.pf-tabs,.pf-top{background:rgb(var(--c1rgb)/.5)}
+.pf-tabs{border-radius:0 0 18px 18px}
+.coach .tabs button{background:none;border:0;box-shadow:none}
+@media (min-width:900px){
+ .coach .xcn .tabs button[aria-selected="true"]{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(238,59,43,.35)}
+ .coach .tabs button[aria-selected="true"] .ind{display:none}
+}
+.coach .panel,.coach .xhead{text-shadow:0 1px 8px rgb(0 0 0/calc(.85*var(--shk)))}
+.coach .panel :is(.btn,.tile,.dcard,.arow,input,select,textarea,.bd,.tpl,.calc,details){text-shadow:none}
+/* ปุ่มแบน 2 มิติ: สีทึบ ไม่มีไล่เฉด ไม่มี glow */
+.btn.primary,.donebtn,.xbtn,.login-card .btn.primary,.coach .btn.primary,.xs .ak-foot .btn.primary,.toast button,
+.tabbar .gl,.coach .tabs .ind,.xsg button[aria-pressed="true"],.xs .ak-cx[aria-pressed="true"],.ak-cx[aria-pressed="true"],
+.xv .hs-c.done,.hs-c.done,.coach .xcn .tabs button[aria-selected="true"],.ak-fp.on{background-image:none;box-shadow:none;text-shadow:none}
+.btn.primary,.donebtn,.xbtn,.login-card .btn.primary,.coach .btn.primary,.xs .ak-foot .btn.primary,.tabbar .gl,.coach .tabs .ind,
+.xs .ak-cx[aria-pressed="true"],.ak-cx[aria-pressed="true"],.xv .hs-c.done,.hs-c.done,.toast button{background:#ee3b2b}
+.btn.primary:active,.donebtn:active,.xbtn:active{background:#cf2c1b}
+.xv .hs-c.done.now,.hs-c.done.now{box-shadow:0 0 0 2px var(--pg),0 0 0 3.5px var(--tx)}
+.xsg button[aria-pressed="true"],.coach .xcn .tabs button[aria-selected="true"]{background:#ee3b2b}
+.ak-fp.on{background:hsl(var(--h),72%,46%)}
+.hlogo,.login-card .logo,.xv h1.x-brand::before{filter:none;background:#ee3b2b}
+.hs-fl svg,.xv .hs-fl svg{filter:none}
+
+/* ช่องทึบสีเทา (ไม่ใส) */
+:root,[data-theme]{--bg2:var(--c1);--card:var(--c1);--xcd:var(--c1);--pane:var(--c1);--bd:rgb(var(--fg)/.08);--hair:rgb(var(--fg)/.08)}
+.xk,.whero,.card2,.stat,.pt,.crow,.pz,.login-card,.wcard,.tcard,.hweek,.ak-g,.ak-nb,.srow,.fbline,.hstrip,.pg,.fp,.ac,.xv .hstrip,.me-actions,
+.coach .tile,.coach .dcard,.coach .dcar,.coach .dtable,.coach .arow,.coach .wsum,.coach .calc,.coach .tpl,.coach .pace-grid>*,.coach details,.coach .addrow,.coach .login-card{background:var(--c1)}
+.whero,.hero2,.bib{background:var(--c1)}
+.wcard{background:color-mix(in srgb,var(--c,#ee3b2b) 10%,var(--c1))}
+.xgauge{background:#3a2a29;border-color:rgba(238,59,43,.35)}
+.btn,.pillb,.x,.pill,.scale button,.chip span,.tabs button,.plus,.cempty,.wnav button,.wnav2 button,.donebtn.off,.xci,.xci.sm,.xch,.xpl{background:var(--c2);border:1px solid rgb(var(--fg)/.08)}
+.xs .xci,.xs .xci.sm,.xs .xpl{background:var(--c3)}
+.coach .tabs button,.tabbar .tb{background:none;border:0}
+.wh-stats,.wrow,.cp,.ak-cell,.fp-feel,.fp-life,.xbx,.xs .ptiles .pt{background:var(--c2)}
+.xs .xk,.xs .ak-g,.xs .ak-nb,.xs .mcal,.xs .fb-more,.ak-md .ak-g,.ak-md .stat,.ak-md .pz,.ak-md .pt,.ak-md .srow,.ak-md .fbline,.coach .ewo,.coach .cw,.coach .arow details,.coach .calc{background:var(--c2);backdrop-filter:none;-webkit-backdrop-filter:none}
+.xs .ak-fp,.ak-fp,.xs .ak-cx,.ak-cx,.xs .mnav .ak-rb,.xs .ak-foot .btn:not(.primary){background:var(--c3)}
+.xs .ak-fp.on,.ak-fp.on{background:hsl(var(--h),72%,46%)}
+.xs .ak-cx[aria-pressed="true"],.ak-cx[aria-pressed="true"]{background:#ee3b2b}
+.xsg{background:var(--c0)}.xsg button{background:transparent}.xsg button[aria-pressed="true"]{background:#ee3b2b}
+input,select,textarea,.ak-fld input,.ak-md textarea,.ak-md input,.ak-md select{background:var(--c0)}
+.ak-md,.ak-md.xs,dialog.sheet,.coach dialog#wdlg{background:var(--c1);border:1px solid rgb(var(--fg)/.1);box-shadow:0 24px 60px rgb(0 0 0/calc(.7*var(--shk)));backdrop-filter:none;-webkit-backdrop-filter:none}
+.toast{background:var(--c2)}
+.tabbar,.coach .tabs{background:linear-gradient(160deg,rgb(var(--fg)/.1),rgb(var(--fg)/.02) 60%),rgb(var(--c1rgb)/.5);border-color:rgb(var(--fg)/.16);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6)}
+@media (min-width:900px){.coach .tabs{background:var(--c1)}.coach .topbar,.coach .xcn{background:var(--c1)}}
+.coach .topbar{background:linear-gradient(180deg,rgb(var(--pgrgb)/.94),rgb(var(--pgrgb)/.8))}
+/* รูปโปรไฟล์ใน Dock */
+.tabbar .tb .tb-av{display:block;width:32px;height:32px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1.5px rgb(var(--fg)/.28)}
+.tabbar .tb[aria-current="page"] .tb-av{box-shadow:0 0 0 2px #fff}
+.pf-tabs,.pf-top{background:none;border-radius:0}
+/* ตัวเลือกใน Dock = กระจกใส */
+.tabbar .gl,.coach .tabs .ind{background:linear-gradient(160deg,rgb(var(--fg)/.28),rgb(var(--fg)/.08));border:1px solid rgb(var(--fg)/.3);
+  box-shadow:inset 0 1px 0 rgb(var(--fg)/.35);backdrop-filter:blur(8px) saturate(1.4);-webkit-backdrop-filter:blur(8px) saturate(1.4)}
+/* ตัวเลือกใน Dock: ใสทะลุเห็นพื้น Dock เทา เหลือแค่ขอบกระจกบาง */
+.tabbar .gl,.coach .tabs .ind{background:rgb(var(--fg)/.05);border:1px solid rgb(var(--fg)/.38);
+  box-shadow:inset 0 1px 0 rgb(var(--fg)/.3),inset 0 -1px 0 rgb(var(--fg)/.08);backdrop-filter:none;-webkit-backdrop-filter:none}
+/* ตัวเลือกใน Dock: กระจกใส ไม่เบลอ (ไล่เฉดสะท้อนแสงมุมบนซ้าย + ขอบกระจกหนาขึ้น) */
+.tabbar .gl,.coach .tabs .ind{background:linear-gradient(145deg,rgb(var(--fg)/.3) 0%,rgb(var(--fg)/.07) 38%,rgb(var(--fg)/.02) 62%,rgb(var(--fg)/.16) 100%);
+  border:1px solid rgb(var(--fg)/.5);backdrop-filter:none;-webkit-backdrop-filter:none;
+  box-shadow:inset 0 1.5px 1px rgb(var(--fg)/.65),inset 0 -1.5px 1px rgb(var(--fg)/.22),inset 1px 0 1px rgb(var(--fg)/.2),inset -1px 0 1px rgb(var(--fg)/.12)}
+
+/* ตัวเลือกใน Dock: กลับเป็นสีส้มทึบแบบแบน */
+.tabbar .gl,.coach .tabs .ind{background:#ee3b2b;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+/* ---------- หน้า Welcome ตอนเปิดแอป ---------- */
+#splash{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 max(44px,env(safe-area-inset-bottom));animation:splashOut .55s ease 1.9s forwards;cursor:pointer}
+#splash .sp-logo{position:absolute;left:50%;top:46%;width:min(64vw,360px);height:auto;transform:translate(-50%,-50%);animation:splashLogo .7s cubic-bezier(.2,.8,.2,1) both;pointer-events:none}
+#splash .sp-bar{position:relative;width:min(220px,56vw);height:3px;border-radius:3px;background:rgba(43,44,48,.22);overflow:hidden}
+#splash .sp-bar i{position:absolute;inset:0;background:#2b2c30;transform-origin:left;animation:splashBar 1.8s cubic-bezier(.3,.6,.3,1) forwards}
+#splash.out{animation:none;opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s .45s}
+@keyframes splashOut{to{opacity:0;visibility:hidden}}
+@keyframes splashBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes splashLogo{from{opacity:0;transform:translate(calc(-50% - 28px),-50%)}to{opacity:1;transform:translate(-50%,-50%)}}
+@media (prefers-reduced-motion:reduce){#splash{animation-duration:.3s;animation-delay:1.2s}#splash .sp-bar i,#splash .sp-logo{animation:none}}
+
+/* การ์ดทำตามแผน: เทาทึบ ไม่มีกรอบแดง วงกลมเต็ม */
+.xgauge{background:var(--c1);border:1px solid rgb(var(--fg)/.08);color:var(--tx);padding:16px 18px}
+.xgauge p{color:var(--tx2)}.xgauge p:first-child{color:var(--tx)}
+
+/* ---------- โทนสว่าง ---------- */
+:root{--fg:255 255 255;--pg:#202124;--pgrgb:32 33 36;--c1:#2b2c30;--c1rgb:43 44 48;--c2:#34353a;--c3:#3b3c42;--c0:#27282b;--bad-tx:#ff8ea3;--warn-tx:#ffd27a;--link:#ff7d6a;--dockic:#a8a49d;--shk:1}
+html[data-mode="light"],html[data-mode="light"][data-theme]{color-scheme:light;--fg:0 0 0;--pg:#e9ebef;--pgrgb:233 235 239;--c1:#fff;--c1rgb:255 255 255;--c2:#f1f2f5;--c3:#e2e4e9;--c0:#f4f5f8;
+  --tx:#1b1c1f;--tx2:#55585f;--tx3:#80838b;--xt2:#55585f;--ink:#1b1c1f;--chalk:#1b1c1f;
+  --bg:#e9ebef;--bg3:rgba(0,0,0,.05);--bg4:rgba(0,0,0,.08);--bd:rgba(0,0,0,.1);--bd2:rgba(0,0,0,.2);--lane:rgba(0,0,0,.07);--xbd:rgba(0,0,0,.1);--hair:rgba(0,0,0,.09);
+  --strength:#6c4fe0;--rest:#6b7280;--race:#b57400;--bike:#12935f;--swim:#0a78b5;--brick:#d13a7a;--ok:#12935f;--bad:#d62b49;--danger:#d62b49;--warn:#b57400;--ice:#0a78b5;
+  --lv0:#0a78b5;--lv1:#b57400;--rest-bar:#d3d6dc;--shadow:rgba(0,0,0,.18);--glass:0 4px 16px rgba(0,0,0,.07);--xsh:0 4px 16px rgba(0,0,0,.07);
+  --bad-tx:#c0243f;--warn-tx:#8a5a00;--link:#d9341f;--dockic:#5c5f66;--shk:.25}
+html[data-mode="light"] body,html[data-mode="light"] body:not([data-tab="me"]){background:transparent!important}
+html[data-mode="light"] .toast button,html[data-mode="light"] .btn.primary,html[data-mode="light"] .donebtn{color:#fff}
+
+/* สวิตช์ธีม */
+.thm{display:inline-flex}.thm button{font-size:13px;padding:7px 12px}
+.thm-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;margin-top:10px}
+.thm-row>span{font-weight:600;font-size:15px}
+.coach .xcn-f .thm-row{background:none;border:0;box-shadow:none;padding:0 0 10px;margin:0;justify-content:center}
+.thm-top{display:none}
+@media (max-width:899px){.coach .thm-top{display:block;margin-top:12px}.coach .xhead{position:relative}}
+.xsg.thm{width:auto}
+.thm button{white-space:nowrap;font-size:12px;padding:7px 11px}
+/* Dock โค้ชบนมือถือ: ปุ่มที่เลือกต้องโปร่ง ให้วงส้ม .ind เป็นตัวไฮไลต์เพียงอย่างเดียว */
+@media (max-width:899px){.coach .xcn .tabs button[aria-selected="true"],.coach .tabs button[aria-selected="true"]{background:none;box-shadow:none;border-radius:0}}

@@ -1,0 +1,54 @@
+/* หน้าเข้าสู่ระบบ (รวม Get Started เดิมเข้าด้วยกัน): รูปนักวิ่งเต็มจอ + แผ่นฟอร์มกระจก
+   จอแคบ = แผ่นฟอร์มอยู่ล่าง · จอกว้างตั้งแต่ 900px = ฟอร์มซ้าย รูปขวา
+   ทุกคลาสขึ้นต้น lg- เพื่อไม่ชนกับสไตล์ของแอป */
+.lg{--lg-bg:#0b0b0c;--lg-text:#f4f2ee;--lg-mute:#c2bfba;--lg-accent:#ff7a1a;--lg-err:#ff8a7e;position:fixed;inset:0;z-index:40;overflow-y:auto;background:var(--lg-bg);color:var(--lg-text)}
+.lg *{box-sizing:border-box}
+.lg-stage{position:relative;min-height:100%;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.lg-hero{position:absolute;inset:0;background:url(bg/login-runner.jpg) 50% top/cover no-repeat;filter:saturate(1.12) contrast(1.05)}
+.lg-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 22%,rgba(0,0,0,0) 50%,rgba(11,11,12,.4) 100%)}
+.lg-stage::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;opacity:.34;mix-blend-mode:overlay;background-size:220px 220px;background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.lg-logo{position:absolute;z-index:2;top:max(56px,calc(env(safe-area-inset-top) + 40px));left:22px;width:72px;height:auto}
+.lg-sheet{position:relative;z-index:2;width:calc(100% - 24px);max-width:360px;margin:0 auto max(36px,calc(env(safe-area-inset-bottom) + 22px));padding:18px 16px 16px;border-radius:26px;background:rgba(18,16,15,.5);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);border:1px solid rgba(255,255,255,.14)}
+.lg h1{margin:0;font-style:italic;font-weight:700;font-size:30px;line-height:1.2;color:var(--lg-text)}
+.lg-sub{margin:4px 0 14px;color:var(--lg-mute);font-weight:400;font-size:14px;line-height:1.5}
+.lg-field{display:flex;align-items:center;gap:10px;height:46px;margin:0 0 9px;padding:0 12px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);transition:border-color .15s}
+.lg-field:focus-within{border-color:var(--lg-accent)}
+.lg-field svg{flex:none;width:18px;height:18px;stroke:var(--lg-mute);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lg-field input,.lg-field input:focus{flex:1;min-width:0;width:auto;height:auto;margin:0;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;background:none!important;color:var(--lg-text);font-size:15px}
+.lg-field input::placeholder{color:#8f8c88}
+.lg-field input:-webkit-autofill{-webkit-text-fill-color:var(--lg-text);transition:background-color 9999s}
+.lg-eye{display:flex;margin:-6px;padding:6px;border:0;border-radius:8px;background:none;cursor:pointer}
+.lg-hint{margin:0 0 10px;text-align:right;font-size:13px;color:var(--lg-mute)}
+.lg-msg{margin:0 0 8px;font-size:12.5px;line-height:1.4;color:var(--lg-err)}
+.lg-msg:empty{display:none}
+.lg-go{display:block;width:100%;height:48px;border:0;border-radius:999px;background:#fff;color:#111;font-size:16px;font-weight:700;cursor:pointer;transition:transform .12s,background .15s;-webkit-tap-highlight-color:transparent}
+.lg-go:hover{background:#ececec}
+.lg-go:active{transform:scale(.985)}
+.lg-go:disabled{opacity:.7;cursor:default}
+.lg-signup{margin:12px 0 0;text-align:center;font-size:14px;color:var(--lg-mute)}
+.lg-link{margin-left:4px;padding:4px 2px;border:0;background:none;color:var(--lg-accent);font-weight:600;cursor:pointer}
+.lg-link:hover{text-decoration:underline}
+.lg-install{display:block;width:100%;margin-top:6px;padding:8px;border:0;background:none;color:var(--lg-mute);font-size:13px;text-decoration:underline;cursor:pointer}
+.lg-install[hidden]{display:none}
+.lg button:focus-visible{outline:2px solid var(--lg-accent);outline-offset:3px}
+@media (min-width:600px){.lg-sheet{max-width:400px;margin-bottom:max(9vh,calc(env(safe-area-inset-bottom) + 22px));padding:22px 20px 20px}.lg h1{font-size:34px}.lg-logo{width:90px;left:36px;top:64px}}
+@media (min-width:900px){
+ .lg-stage{flex-direction:row;align-items:center;justify-content:flex-start}
+ .lg-hero{left:auto;right:0;width:56%;background-position:50% 18%}
+ .lg-hero::after{background:linear-gradient(90deg,var(--lg-bg) 0%,rgba(11,11,12,0) 28%),linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 25%)}
+ .lg-logo{width:104px;left:max(40px,calc((44vw - 360px)/2));top:72px}
+ .lg-sheet{width:360px;max-width:none;margin:0 0 0 max(40px,calc((44vw - 360px)/2));padding:0;background:none;border:0;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+ .lg h1{font-size:42px}.lg-sub{font-size:15px;margin-bottom:20px}
+ .lg-field{height:50px}.lg-go{height:52px;font-size:17px}
+}
+@media (max-height:620px) and (max-width:899px){.lg-sub{display:none}.lg h1{font-size:26px;margin-bottom:10px}}
+@media (prefers-reduced-motion:reduce){.lg-go,.lg-field{transition:none}}
+
+/* หน้าฟอร์ม: ลิงก์กลับ/สลับหน้า และกล่องเป้าหมายตายตัว */
+.login-card .back{display:inline-block;background:none;border:0;padding:.25rem 0;margin:0 0 .5rem;color:inherit;opacity:.7;font:inherit;font-size:.9rem;cursor:pointer}
+.login-card .swap{display:block;width:100%;margin-top:.75rem;background:none;border:0;font:inherit;font-size:.9rem;text-decoration:underline;color:inherit;opacity:.85;cursor:pointer}
+.login-card .goal-box{margin:.5rem 0 1rem;padding:.7rem .85rem;border-radius:12px;border:1px solid rgba(128,128,128,.35);font-size:.9rem;line-height:1.5}
+.login-card .goal-box b{display:block}
+.login-card .hint{font-size:.8rem;opacity:.7;margin:.25rem 0 0}
+.reg-done dl{display:grid;grid-template-columns:auto 1fr;gap:.4rem .9rem;margin:1rem 0;font-size:.95rem}
+.reg-done dt{opacity:.7}.reg-done dd{margin:0;font-weight:600;text-align:right}

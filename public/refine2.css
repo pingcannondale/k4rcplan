@@ -1,0 +1,51 @@
+/* ===== refine2.css — ข้อ 3 ตัวเลขเอียงหนา / 4 การ์ดโค้ช / 5 หน้าสรุปหลังซ้อม / 6 มุมโค้ง ===== */
+:root{--r-card:28px;--r-in:18px;--r-pill:999px;--disp:Orbitron,"K4 Jakarta",sans-serif}
+
+/* 3) ตัวเลขหลักใช้ฟอนต์เอียงหนา เข้ากับโลโก้ใหม่ (ตัวไทยยังใช้ฟอนต์เดิม) */
+.fp-n b,.xbx b,.hs-fl b{font-family:var(--disp)!important;font-style:italic;font-weight:900!important;letter-spacing:0!important}
+.fp-n b{font-size:1.2rem!important}.team .fp-n b{font-size:1.02rem!important}
+.xbx b{font-size:1.4rem!important}.hs-fl b{font-size:1.5rem!important}
+.fp-n small,.xbx b small{font-family:"K4 Jakarta","K4 Noto",sans-serif!important;font-style:normal!important;font-weight:500!important}
+.xv svg text{font-family:var(--disp)!important;font-style:italic;font-weight:900!important}
+
+/* 4) ข้อความจากโค้ช: มีอวตาร K4 + ป้ายชื่อโค้ช + ป้ายใหม่ */
+.ak-msg{position:relative;padding:16px 16px 16px 68px!important;border-radius:var(--r-in)!important;box-shadow:none!important}
+.ak-msg::before{content:"K4";position:absolute;left:14px;top:16px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  background:#ee3b2b;color:#2b2c30;font:italic 900 14px/1 var(--disp);letter-spacing:-.02em}
+.ak-msg .sx{margin:0 0 6px!important;font-size:12.5px!important;color:rgb(var(--fg)/.6)}
+.ak-msg .sx::before{content:"โค้ช · ";font-weight:700;color:var(--tx)}
+.xs .ak-msg b{font-size:15.5px!important;font-weight:500!important;line-height:1.55!important;margin-top:0!important;color:var(--tx)}
+.ak-msg.new::after{content:"ใหม่";position:absolute;right:14px;top:14px;font-size:11px;font-weight:700;line-height:1;padding:5px 10px;border-radius:99px;background:#ee3b2b;color:#2b2c30}
+
+/* 5) หน้าสรุปหลังซ้อม (ให้คะแนนความเหนื่อย) */
+#dlg-title{font-size:1.45rem!important;font-weight:700!important;line-height:1.2}
+.xs-t .xm{display:inline-block;margin-top:8px!important;padding:4px 12px;border-radius:99px;background:rgb(var(--fg)/.1);font-size:12.5px!important;font-weight:600;color:var(--tx)}
+.xs-b .ak-h{margin:22px 0 10px!important;font-size:12.5px!important;font-weight:700!important;letter-spacing:.02em;color:rgb(var(--fg)/.62)!important;text-transform:none}
+.xs-b .ak-h:first-child{margin-top:6px!important}
+.xs .ak-fg{gap:7px}
+.xs .ak-fp{height:84px;border-radius:var(--r-in)!important;gap:12px}
+.xs .ak-fp b{font-size:.8rem}
+.xs .ak-fp .lv{height:16px;gap:3px}.xs .ak-fp .lv s{width:5px}
+.xs .ak-fp.on{transform:none;box-shadow:0 0 0 2px #fff inset,0 10px 22px hsla(var(--h),68%,43%,.38)}
+.xs .ak-cxr.wrap{gap:8px}
+.xs .ak-cx{border-radius:var(--r-pill)!important}
+.xs .ak-cx[aria-pressed="true"]{background:rgb(var(--fg)/.94)!important;color:#202124!important;box-shadow:none!important;border-color:transparent!important}
+.fb-more{border-radius:var(--r-in)!important;margin-top:20px}
+.xs-b .ak-fld input,.xs-b .ak-fld textarea,.xs-b textarea,.xs-b input{border-radius:var(--r-in)!important}
+
+/* 6) มุมโค้ง 3 ขนาด: การ์ด/หน้าต่าง = 28, ชิ้นย่อย = 18, ปุ่ม/ชิป = เม็ดยา */
+.xk,.ak-g,.fp,.pg,.ak-md,.xcard,.team .fp,.wcard{border-radius:var(--r-card)!important}
+.xbx,.xsd,.xch,.ak-fp,input,textarea,.fb-more{border-radius:var(--r-in)!important}
+.xbtn,.btn,.xpl,.xsg,.ak-cx,.fp-feel{border-radius:var(--r-pill)!important}
+.xsg button{border-radius:var(--r-pill)!important}
+
+/* ---- ปุ่ม "ทำเสร็จแล้ว" + "ข้ามวันนี้" อยู่แถวเดียวกัน และสถานะข้าม (เทา ไม่ใช่แดง) ---- */
+.xbrow{display:flex;gap:10px;align-items:center}
+.xbrow .xbtn{width:auto;min-width:0;padding:0 6px}
+.xbrow .xbtn:not(.w){flex:1 1 0;height:52px;font-size:16px}
+.xbrow .xbtn.w{white-space:nowrap;flex:0 0 31%;height:44px;font-size:14px;background:rgb(var(--fg)/.08);color:var(--tx2);border:1px solid var(--hair);box-shadow:none}
+.xdnp.xsk{background:rgb(var(--fg)/.08);color:var(--tx2);margin-bottom:10px}
+.hs-c.skip,.xv .hs-c.skip{background:rgb(var(--fg)/.08);color:var(--tx3);border:0;box-shadow:none;opacity:1}
+.mc.sk,.xs .mcal .mc.sk{background:rgb(var(--fg)/.07)}
+.md.sk{background:transparent;border-color:var(--tx3)}
+.xch.sk i{background:var(--tx3)}

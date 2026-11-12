@@ -1,0 +1,700 @@
+:root, [data-theme="dark"] {
+  --bg: #080a0f; --bg2: #10131a; --bg3: #171b24; --bg4: #202531;
+  --tx: #f3f0e8; --tx2: #b9beca; --tx3: #8c94a6;
+  --bd: rgba(255,255,255,.07); --bd2: rgba(255,255,255,.15); --lane: rgba(255,255,255,.05);
+  --run: #ff6b35; --run-g: rgba(255,107,53,.16);
+  --strength: #b388ff; --strength-g: rgba(179,136,255,.16);
+  --rest: #6f7889; --rest-g: rgba(111,120,137,.16);
+  --race: #ffc145; --race-g: rgba(255,193,69,.2);
+  --bike: #35d09a; --bike-g: rgba(53,208,154,.16);
+  --swim: #4cc9f0; --swim-g: rgba(76,201,240,.16);
+  --brick: #ff5d8f; --brick-g: rgba(255,93,143,.16);
+  --accent: #ff5a2a; --accent-g: rgba(255,90,42,.18); --on-accent: #0b0a09;
+  --ok: #3ddc97; --bad: #ff5d7a; --warn: #ffc145; --ice: #5ad1ff; --chalk: #f1eee6;
+  --lv0: #4f8fb5; --lv1: #ffc145; --lv2: #ff5a2a; --rest-bar: #2a3140;
+  --danger: #ff5d7a; --shadow: rgba(0,0,0,.45);
+}
+[data-theme="light"] {
+  --bg: #eceff4; --bg2: #ffffff; --bg3: #f4f6fa; --bg4: #e3e8ef;
+  --tx: #0b0d12; --tx2: #465066; --tx3: #5d6a80;
+  --bd: rgba(11,13,18,.09); --bd2: rgba(11,13,18,.18); --lane: rgba(11,13,18,.05);
+  --run: #d9400f; --run-g: rgba(217,64,15,.12);
+  --strength: #7c4dff; --strength-g: rgba(124,77,255,.12);
+  --rest: #5d6a80; --rest-g: rgba(93,106,128,.12);
+  --race: #b7791f; --race-g: rgba(183,121,31,.16);
+  --bike: #0f9d6a; --bike-g: rgba(15,157,106,.12);
+  --swim: #0b7fb8; --swim-g: rgba(11,127,184,.12);
+  --brick: #d6336c; --brick-g: rgba(214,51,108,.12);
+  --accent: #d9400f; --accent-g: rgba(217,64,15,.12); --on-accent: #ffffff;
+  --ok: #0f9d6a; --bad: #d6335a; --warn: #b7791f; --ice: #0b7fb8; --chalk: #fffdf7;
+  --lv0: #3b7ea6; --lv1: #d99a00; --lv2: #d9400f; --rest-bar: #c7cfdb;
+  --danger: #d6335a; --shadow: rgba(15,23,42,.18);
+}
+.s-run { --c: var(--run); --g: var(--run-g); }
+.s-strength { --c: var(--strength); --g: var(--strength-g); }
+.s-rest { --c: var(--rest); --g: var(--rest-g); }
+.s-race { --c: var(--race); --g: var(--race-g); }
+.s-bike { --c: var(--bike); --g: var(--bike-g); }
+.s-swim { --c: var(--swim); --g: var(--swim-g); }
+.s-brick { --c: var(--brick); --g: var(--brick-g); }
+.p-base { --pc: #3b82f6; } .p-build { --pc: #8b5cf6; } .p-peak { --pc: #ec4899; }
+.p-specific { --pc: #f97316; } .p-taper { --pc: #14b8a6; } .p-other { --pc: #64748b; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+body { font-family: Outfit, Prompt, "Noto Sans Thai", system-ui, sans-serif; background: var(--bg); color: var(--tx); line-height: 1.65; min-height: 100vh; overflow-x: hidden; touch-action: manipulation; }
+button, input, select, textarea { font: inherit; color: inherit; touch-action: manipulation; }
+a, button, label { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: "JetBrains Mono", monospace; }
+:root { --display: "Big Shoulders Display", Outfit, Prompt, sans-serif; }
+.muted { color: var(--tx3); } .small { font-size: .85rem; }
+.center { text-align: center; padding: 4rem 1rem; }
+.err { color: var(--danger); min-height: 1.5em; font-size: .9rem; }
+
+/* ---------- ปุ่ม / ฟอร์ม ---------- */
+.btn { border: 1px solid var(--bd2); background: var(--bg3); color: var(--tx); border-radius: 10px; padding: .5rem 1rem; font-weight: 500; min-height: 40px; transition: border-color .15s, background .15s; }
+.btn:hover { border-color: var(--tx3); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--danger); }
+.btn.sm { min-height: 32px; padding: .2rem .7rem; font-size: .85rem; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btns { display: flex; flex-wrap: wrap; gap: .5rem; }
+input, select, textarea { width: 100%; padding: .55rem .75rem; border: 1px solid var(--bd2); border-radius: 10px; background: var(--bg3); }
+textarea { resize: vertical; }
+label.l { display: block; font-size: .8rem; color: var(--tx3); margin: .9rem 0 .25rem; }
+
+/* ---------- เข้าสู่ระบบ ---------- */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+.login-card { width: 100%; max-width: 380px; background: var(--bg2); border: 1px solid var(--bd); border-radius: 20px; padding: 2rem 1.75rem; }
+.brand { font-family: "Playfair Display", Prompt, serif; font-size: 1.9rem; letter-spacing: -.01em; line-height: 1.3; }
+.login-card .btn { margin-top: .75rem; }
+.login-card p.muted { margin-top: .25rem; }
+
+/* ---------- โครงหน้านักกีฬา ---------- */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 320px; background: var(--bg2); border-right: 1px solid var(--bd); padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 1.75rem; position: fixed; inset: 0 auto 0 0; overflow-y: auto; z-index: 100; }
+.ev { text-align: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--bd); }
+.ev-name { font-family: "Playfair Display", Prompt, serif; font-size: 1.6rem; font-weight: 700; line-height: 1.35; letter-spacing: -.01em; margin-bottom: .5rem; }
+.ev-date { font-family: "JetBrains Mono", monospace; font-size: .85rem; color: var(--accent); }
+.ev-ath { color: var(--tx3); margin-top: .35rem; font-size: .9rem; }
+.ring-box { position: relative; width: 140px; height: 140px; margin: 0 auto; }
+.ring { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--bg3); stroke-width: 8; }
+.ring-fill { fill: none; stroke: url(#pg); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 377; transition: stroke-dashoffset .8s ease-out; }
+.ring-tx { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring-tx b { font-family: "JetBrains Mono", monospace; font-size: 2rem; font-weight: 500; line-height: 1.2; }
+.ring-tx span { font-size: .75rem; color: var(--tx3); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.stat { background: var(--bg3); border: 1px solid var(--bd); border-radius: 12px; padding: .9rem .5rem; text-align: center; }
+.stat b { display: block; font-family: "JetBrains Mono", monospace; font-size: 1.35rem; font-weight: 500; line-height: 1.3; }
+.stat span { font-size: .75rem; color: var(--tx3); }
+.sp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; font-size: .8rem; color: var(--tx3); }
+.link { background: none; border: 0; color: var(--accent); font-size: .8rem; font-weight: 500; }
+.link:hover { text-decoration: underline; }
+.sp { display: flex; align-items: center; gap: .75rem; width: 100%; text-align: left; padding: .6rem .9rem; margin-bottom: .5rem; background: var(--bg3); border: 1px solid var(--bd); border-radius: 10px; }
+.sp:hover { border-color: var(--bd2); background: var(--bg4); }
+.sp.on { border-color: var(--c); background: var(--g); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.sp .nm { flex: 1; font-weight: 500; font-size: .9rem; }
+.sp .hr { font-family: "JetBrains Mono", monospace; font-size: .8rem; color: var(--tx3); }
+.side-foot { margin-top: auto; display: flex; gap: .5rem; }
+.side-foot .btn { flex: 1; }
+
+.main { margin-left: 320px; flex: 1; min-width: 0; padding: 2rem; }
+.mhead { display: none; }
+.scrim { display: none; }
+.phases { display: flex; gap: 4px; margin-bottom: 1.5rem; }
+.phase { height: 30px; border: 0; border-radius: 6px; background: var(--pc); color: #fff; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-shadow: 0 1px 2px rgba(0,0,0,.35); overflow: hidden; white-space: nowrap; }
+.phase:hover { filter: brightness(1.15); }
+.weeks { display: flex; flex-direction: column; gap: 1.5rem; }
+.week { background: var(--bg2); border: 1px solid var(--bd); border-radius: 16px; overflow: hidden; scroll-margin-top: 1rem; }
+.week.cur { border-color: var(--bd2); }
+.wk-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .9rem 1.4rem; background: var(--bg3); border-bottom: 1px solid var(--bd); }
+.wk-title { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.wk-num { font-family: "JetBrains Mono", monospace; font-size: .75rem; padding: .25rem .6rem; border-radius: 6px; background: var(--bg); color: var(--tx2); }
+.wk-phase { font-size: .8rem; font-weight: 600; letter-spacing: .05em; color: var(--pc); }
+.wk-focus { font-size: .85rem; color: var(--tx3); }
+.wk-sum { font-family: "JetBrains Mono", monospace; font-size: .85rem; color: var(--tx2); }
+.wk-sum b { color: var(--tx); font-weight: 500; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--bd); }
+.day { background: var(--bg2); min-height: 150px; padding: .75rem; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.day.today { background: var(--bg3); }
+.day.today .dn { color: var(--accent); }
+.dh { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: .5rem; border-bottom: 1px solid var(--bd); }
+.dn { font-size: .8rem; font-weight: 600; color: var(--tx3); }
+.dd { font-family: "JetBrains Mono", monospace; font-size: .75rem; color: var(--tx3); }
+.empty { flex: 1; display: grid; place-items: center; color: var(--tx3); font-size: .85rem; font-style: italic; }
+.wo { position: relative; width: 100%; text-align: left; padding: .55rem .7rem .55rem .85rem; border: 1px solid transparent; border-radius: 8px; background: var(--g); overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.wo::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--c); }
+.wo:hover { transform: translateY(-2px); box-shadow: 0 4px 18px var(--shadow); }
+.wo.done { opacity: .6; }
+.wo.done::after { content: "✓"; position: absolute; top: .3rem; right: .5rem; font-size: .75rem; color: var(--tx2); }
+.wo .sn { font-size: .7rem; font-weight: 600; color: var(--c); }
+.wo .nm { display: block; font-size: .85rem; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.wo .du { display: block; font-family: "JetBrains Mono", monospace; font-size: .72rem; color: var(--tx3); margin-top: .25rem; }
+.foot { text-align: center; color: var(--tx3); font-size: .8rem; margin-top: 2rem; }
+
+/* ---------- หน้าต่างรายละเอียด ---------- */
+dialog { margin: auto; width: min(600px, calc(100vw - 2rem)); max-height: 85vh; padding: 0; border: 1px solid var(--bd2); border-radius: 20px; background: var(--bg2); color: var(--tx); overflow: hidden; }
+dialog[open] { display: flex; flex-direction: column; }
+dialog::backdrop { background: rgba(0,0,0,.65); }
+.m-head { padding: 1.4rem 1.75rem; border-bottom: 1px solid var(--bd); display: flex; justify-content: space-between; gap: 1rem; }
+.badge { display: inline-flex; align-items: center; gap: .5rem; padding: .25rem .8rem; border-radius: 20px; background: var(--g); color: var(--c); font-size: .8rem; font-weight: 600; }
+.m-title { font-size: 1.35rem; font-weight: 600; line-height: 1.4; margin-top: .5rem; }
+.m-date { color: var(--tx3); font-size: .9rem; }
+.x { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--bd2); background: var(--bg3); font-size: 1.1rem; flex: none; }
+.m-body { padding: 1.4rem 1.75rem; overflow-y: auto; }
+.m-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .6rem; margin-bottom: 1.25rem; }
+.m-stat { background: var(--bg3); border: 1px solid var(--bd); border-radius: 10px; padding: .6rem .8rem; }
+.m-stat span { display: block; font-size: .72rem; color: var(--tx3); }
+.m-stat b { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: .95rem; }
+.m-sec { font-size: .8rem; color: var(--tx3); margin: 1rem 0 .3rem; }
+.m-tx { white-space: pre-line; color: var(--tx2); overflow-wrap: anywhere; }
+.m-foot { padding: 1rem 1.75rem; border-top: 1px solid var(--bd); }
+
+/* ---------- หน้าโค้ช ---------- */
+.adm { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 5rem; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.topbar h1 { font-size: 1.2rem; }
+.tabs { display: flex; gap: 4px; background: var(--bg3); padding: 4px; border-radius: 12px; margin-bottom: 1rem; }
+.tabs button { flex: 1; border: 0; background: transparent; padding: .5rem; border-radius: 9px; font-weight: 500; color: var(--tx2); }
+.tabs button[aria-selected="true"] { background: var(--bg2); color: var(--tx); box-shadow: 0 1px 3px var(--shadow); }
+.panel { background: var(--bg2); border: 1px solid var(--bd); border-radius: 16px; padding: 1.1rem; }
+.panel h2 { font-size: 1rem; margin: 1.25rem 0 .6rem; }
+.panel h2:first-child { margin-top: 0; }
+.addrow { display: grid; gap: .5rem; }
+.arow { display: grid; gap: .5rem; padding: .9rem 0; border-top: 1px solid var(--bd); }
+.pwrow { display: flex; gap: .5rem; }
+.pwrow input { flex: 1; }
+.prog { font-size: .85rem; color: var(--tx3); }
+.wk-nav { display: flex; align-items: center; gap: .5rem; margin: .9rem 0; }
+.wk-nav b { flex: 1; text-align: center; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.ed { border: 1px solid var(--bd); background: var(--bg3); border-radius: 12px; padding: .75rem; margin-bottom: .6rem; }
+.ed-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; font-weight: 600; font-size: .95rem; }
+.ewo { border-left: 3px solid var(--c); background: var(--bg2); border-radius: 8px; padding: .55rem; margin-top: .5rem; display: grid; gap: .4rem; }
+.ewo .row { display: grid; grid-template-columns: 110px 1fr auto; gap: .4rem; align-items: center; }
+.ewo .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.actions { position: sticky; bottom: 0; background: var(--bg2); padding: .75rem 0 .25rem; border-top: 1px solid var(--bd); margin-top: .5rem; }
+.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); background: var(--tx); color: var(--bg); padding: .6rem 1.1rem; border-radius: 12px; max-width: 90vw; z-index: 300; }
+.toast.bad { background: var(--danger); color: #fff; }
+.notice { border: 1px dashed var(--bd2); border-radius: 12px; padding: 1.25rem; text-align: center; color: var(--tx3); }
+
+/* ---------- โลโก้ / PWA ---------- */
+.logo { display: block; margin: 0 auto .9rem; max-width: 72%; height: auto; }
+.logo.side { max-width: 150px; margin-bottom: 1rem; }
+.logo.mini { width: 28px; height: 28px; max-width: none; margin: 0; border-radius: 7px; flex: none; }
+.topbar .logo.mini { width: 34px; height: 34px; }
+.topbar h1 { flex: 1; min-width: 0; }
+[data-theme="light"] .logo:not(.mini) { filter: invert(1); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.center-tx { text-align: center; }
+.side-foot.wrap { flex-wrap: wrap; }
+.side-foot.wrap .btn { flex: 1 1 calc(50% - .25rem); }
+.offline { background: var(--accent-g); color: var(--tx); border: 1px solid var(--accent); border-radius: 10px; padding: .5rem .9rem; font-size: .85rem; margin-bottom: 1rem; }
+.main { padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip { position: relative; cursor: pointer; }
+.chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.chip span { display: inline-block; padding: .4rem .85rem; border: 1px solid var(--bd2); border-radius: 20px; background: var(--bg3); font-size: .9rem; }
+.chip small { color: var(--tx3); font-size: .75rem; }
+.chip input:checked + span { background: var(--accent-g); border-color: var(--accent); }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chk { display: flex; gap: .5rem; align-items: flex-start; font-size: .85rem; color: var(--tx2); }
+.chk input { width: auto; margin-top: .3rem; }
+
+@media (min-width: 600px) {
+  .addrow { grid-template-columns: 1fr 1fr 1fr auto; }
+  .arow { grid-template-columns: 1fr 1fr 1fr; align-items: center; }
+  .arow .btns, .arow .prog { grid-column: 1 / -1; }
+}
+@media (max-width: 1280px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); transition: transform .25s; width: min(320px, 88vw); }
+  .sidebar.open { transform: none; box-shadow: 0 0 40px var(--shadow); }
+  .scrim.open { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 90; }
+  .main { margin-left: 0; padding: 1rem; }
+  .mhead { display: flex; align-items: center; gap: .75rem; position: sticky; top: 0; z-index: 50; background: var(--bg); padding: .6rem 0 .8rem; margin-bottom: .5rem; }
+  .mhead .t { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .week { scroll-margin-top: 4.5rem; }
+}
+@media (max-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } .phase { font-size: .6rem; } }
+@media (max-width: 460px) { .grid { grid-template-columns: 1fr; } .day { min-height: 0; } .ewo .row { grid-template-columns: 1fr auto; } .ewo .row select { grid-column: 1 / -1; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+/* ---------- ปรับให้พอดีโทรศัพท์ ---------- */
+/* iOS ซูมหน้าจออัตโนมัติถ้าช่องกรอกตัวอักษรเล็กกว่า 16px จึงบังคับ 16px บนจอสัมผัส/จอเล็ก */
+@media (max-width: 820px), (pointer: coarse) { input, select, textarea { font-size: 16px; } }
+@media (max-width: 720px) {
+  html { font-size: 14.5px; }
+  .main { padding: .75rem .75rem calc(2rem + env(safe-area-inset-bottom, 0px)); }
+  .weeks { gap: 1rem; }
+  .wk-head { padding: .7rem .9rem; gap: .4rem; }
+  .wk-sum { font-size: .8rem; }
+  /* วันละแถว: ซ้ายคือวัน/วันที่ ขวาคือเวิร์คเอาต์ */
+  .grid { grid-template-columns: 1fr; }
+  .day { display: grid; grid-template-columns: 54px 1fr; column-gap: .6rem; row-gap: .4rem; min-height: 0; padding: .6rem .7rem; align-items: start; }
+  .dh { grid-column: 1; grid-row: 1; flex-direction: column; align-items: flex-start; gap: .1rem; border-bottom: 0; padding: .15rem 0 0; }
+  .day > .wo, .day > .empty { grid-column: 2; }
+  .empty { display: block; padding: .35rem 0; text-align: left; }
+  .wo { padding: .6rem .7rem .6rem .9rem; min-height: 44px; }
+  .login { padding: 1rem; }
+  .login-card { padding: 1.5rem 1.25rem; border-radius: 16px; }
+  dialog { width: calc(100vw - 1rem); max-height: 90vh; border-radius: 16px; }
+  .m-head, .m-body, .m-foot { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .m-title { font-size: 1.2rem; }
+  .btn { min-height: 44px; }
+  .btn.sm { min-height: 36px; }
+  .two { grid-template-columns: 1fr; }
+  .panel { padding: .9rem; }
+}
+@media (max-width: 460px) { .ewo .row2 { grid-template-columns: 1fr 1fr; } .adm { padding-left: .75rem; padding-right: .75rem; } }
+
+/* ---------- เพซของฉัน ---------- */
+.pace-btn { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.pace-btn:hover { background: var(--accent-g); }
+.pz { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem .95rem .7rem 1rem; margin-bottom: .5rem; border-radius: 10px; border-left: 4px solid var(--c); background: var(--g); }
+.pz-k { font-weight: 600; color: var(--c); }
+.pz-v { font-family: "JetBrains Mono", monospace; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.pz-v.none { color: var(--tx3); font-weight: 400; }
+.pz-e { --c: var(--bike); --g: var(--bike-g); }
+.pz-lt1 { --c: var(--swim); --g: var(--swim-g); }
+.pz-lt2 { --c: var(--race); --g: var(--race-g); }
+.pz-marathon { --c: var(--run); --g: var(--run-g); }
+.pz-k5 { --c: var(--danger); --g: color-mix(in srgb, var(--danger) 15%, transparent); }
+.pz-vo2max { --c: var(--brick); --g: var(--brick-g); }
+.pz-r { --c: var(--strength); --g: var(--strength-g); }
+/* ฟอร์มกรอกเพซ (หน้าโค้ช) */
+.arow details { grid-column: 1 / -1; background: var(--bg3); border: 1px solid var(--bd); border-radius: 10px; padding: .6rem .8rem; }
+.arow summary { cursor: pointer; font-weight: 500; }
+.pace-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .6rem; margin: .7rem 0; }
+.pace-grid label { font-size: .8rem; color: var(--tx3); display: grid; gap: .2rem; }
+
+/* ================= หน้านักกีฬา แบบ A (มืดสนิท มินิมอล) ================= */
+.shell { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
+.view { padding: max(28px, env(safe-area-inset-top)) 22px calc(104px + env(safe-area-inset-bottom)); }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.t1 { font-size: 1.05rem; color: var(--tx3); }
+.t2 { font-size: .85rem; color: var(--tx3); }
+.wnav { display: flex; gap: .4rem; flex: none; }
+.wnav button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--bd2); background: transparent; font-size: 1.3rem; line-height: 1; }
+.wnav button:disabled { opacity: .3; cursor: default; }
+.bigrow { display: flex; align-items: baseline; gap: .6rem; margin-top: .6rem; flex-wrap: wrap; }
+.big { font-family: Outfit, Prompt, sans-serif; font-size: 76px; font-weight: 300; line-height: 1; letter-spacing: -3px; }
+.bigl { color: var(--tx3); font-size: 1.05rem; }
+.pbar { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: .9rem; }
+.pbar i { display: block; height: 4px; background: var(--accent); border-radius: 2px; transition: width .5s; }
+.strip { display: flex; justify-content: space-between; margin-top: 1.6rem; }
+.dy { background: none; border: 0; display: grid; gap: .5rem; justify-items: center; color: var(--tx3); font-size: .85rem; padding: .2rem .1rem; min-width: 44px; }
+.dy.sel { color: var(--tx); }
+.dc { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--bd2); display: grid; place-items: center; font-size: .95rem; color: var(--tx); font-weight: 500; }
+.dc.done { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.dc.today { background: var(--tx); border-color: var(--tx); color: var(--bg); font-weight: 600; }
+.dc.rest { border-style: dashed; color: var(--tx3); }
+.dy.sel .dc { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.dsec { margin-top: 1.7rem; }
+.dh2 { font-size: .95rem; color: var(--tx3); margin-bottom: .6rem; }
+.wcard { background: var(--bg2); border-radius: 22px; padding: 20px; margin-bottom: 14px; }
+.wmeta { display: flex; gap: .7rem; align-items: center; font-size: .85rem; }
+.sn { color: var(--c); font-weight: 600; }
+.okmark { color: var(--tx3); }
+.wtitle { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin-top: .1rem; overflow-wrap: anywhere; }
+.wcard.done .wtitle { color: var(--tx2); }
+.nums { display: flex; gap: 1.6rem; margin-top: .8rem; flex-wrap: wrap; }
+.nv { font-family: Outfit, Prompt, sans-serif; font-size: 2rem; font-weight: 300; line-height: 1.2; }
+.nu { font-size: .85rem; color: var(--tx3); }
+.graph { display: flex; align-items: flex-end; gap: 3px; height: 76px; margin-top: 1.1rem; }
+.gb { display: block; min-width: 3px; border-radius: 4px; background: var(--lv2); }
+.gb.lv0 { background: var(--lv0); } .gb.lv1 { background: var(--lv1); } .gb.lv2 { background: var(--lv2); } .gb.rest { background: var(--rest-bar); }
+.gb.unk { background: repeating-linear-gradient(45deg, var(--bg4), var(--bg4) 4px, var(--bg3) 4px, var(--bg3) 8px); }
+.srows { margin-top: .9rem; border-top: 1px solid var(--bd); }
+.srow { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid var(--bd); font-size: .95rem; }
+.srow .sub { font-size: .8rem; color: var(--tx3); }
+.srow .sv { font-family: "JetBrains Mono", monospace; font-size: .8rem; color: var(--tx2); text-align: right; white-space: nowrap; }
+.chipsP { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.cp { border: 1px solid var(--accent); color: var(--accent); border-radius: 20px; padding: .1rem .9rem; font-size: .9rem; }
+.cp.mut { border-color: var(--bd2); color: var(--tx2); }
+.wtx { margin-top: .9rem; color: var(--tx2); white-space: pre-line; overflow-wrap: anywhere; font-size: .95rem; }
+.warn { margin-top: .8rem; font-size: .8rem; color: var(--tx3); }
+.donebtn { display: block; width: 100%; height: 52px; margin-top: 1.1rem; border: 0; border-radius: 26px; background: var(--accent); color: var(--on-accent); font-size: 1.05rem; font-weight: 600; }
+.donebtn.off { background: transparent; border: 1px solid var(--bd2); color: var(--tx2); font-weight: 500; }
+.vh { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
+.crow { display: grid; grid-template-columns: 92px 1fr auto; gap: .9rem; align-items: center; width: 100%; background: var(--bg2); border: 1px solid transparent; border-radius: 16px; padding: .8rem .9rem; margin-bottom: .6rem; text-align: left; }
+.crow.now { border-color: var(--bd2); }
+.crow.sel { border-color: var(--accent); }
+.cw b { display: block; font-size: 1rem; }
+.cw span { font-size: .78rem; color: var(--tx3); }
+.cbars { display: flex; align-items: flex-end; gap: 3px; height: 34px; }
+.cbars i { flex: 1; background: var(--lv2); border-radius: 2px; min-height: 3px; }
+.cbars i.r { background: var(--bd2); }
+.cs { text-align: right; font-size: .8rem; color: var(--tx3); }
+.cs b { font-size: 1.1rem; color: var(--tx); font-weight: 500; }
+.me-head { text-align: center; margin-bottom: 1.4rem; }
+.me-head .ev-name { font-size: 1.5rem; }
+.me-actions { display: grid; gap: .6rem; margin-top: 1.4rem; }
+.me-actions .btn { width: 100%; }
+@media (max-width: 380px) { .big { font-size: 64px; } .crow { grid-template-columns: 80px 1fr auto; } }
+
+/* ================= ตัวสร้างเวิร์คเอาต์ (หน้าโค้ช) ================= */
+.bld { background: var(--bg3); border-radius: 10px; padding: .6rem; display: grid; gap: .5rem; }
+.tpl { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.tpl .l2 { font-size: .8rem; color: var(--tx3); margin-right: .2rem; }
+.sb { display: grid; gap: .4rem; background: var(--bg2); border-left: 4px solid var(--lv2); border-radius: 8px; padding: .55rem; }
+.sb.k-warmup, .sb.k-cooldown { border-left-color: var(--lv0); }
+.sb.k-repeat { border-left-color: var(--accent); }
+.sb .r { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.sb .r > * { flex: 1 1 96px; min-width: 0; }
+.sb .r > .xs { flex: 0 0 76px; }
+.sb .r > .sm2 { flex: 0 0 auto; }
+.sb .lab { flex: 0 0 auto; font-size: .8rem; color: var(--tx3); min-width: 58px; }
+.pv { background: var(--bg2); border-radius: 8px; padding: .6rem .7rem; }
+.pv .tot { font-size: .95rem; margin-top: .5rem; font-weight: 500; }
+.pv .graph { margin-top: 0; height: 64px; }
+.pv .warn { margin-top: .4rem; color: var(--danger); }
+.auto { font-size: .8rem; color: var(--tx3); }
+
+/* ================= ความรู้สึกหลังซ้อม (นักกีฬา) ================= */
+.scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: .4rem; }
+.scale button { min-height: 44px; border: 1px solid var(--bd2); background: var(--bg3); border-radius: 10px; font-weight: 500; padding: .2rem; }
+.scale.five button { font-size: .8rem; }
+.scale button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.m-sec b { color: var(--tx); font-weight: 600; margin-left: .4rem; }
+.m-foot.btns { display: flex; }
+dialog .chk { margin-top: 1rem; font-size: .95rem; }
+dialog textarea { margin-top: .2rem; }
+.btns2 { display: grid; gap: .5rem; margin-top: 1rem; }
+.btns2 .donebtn { margin-top: 0; height: 46px; }
+.fbline { margin-top: .9rem; font-size: .9rem; color: var(--tx2); border-left: 3px solid var(--accent); padding-left: .7rem; }
+
+/* ================= หน้าโค้ช: ภาพรวม / ตัวช่วยเพซ / ท่าสเตรงท์ ================= */
+.dcard { background: var(--bg3); border-radius: 14px; padding: .9rem 1rem; margin-bottom: .7rem; }
+.dc-top { display: flex; justify-content: space-between; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
+.dc-top b { font-size: 1.05rem; }
+.bds { display: flex; gap: .35rem; flex-wrap: wrap; }
+.bd { font-size: .75rem; border: 1px solid var(--bd2); border-radius: 20px; padding: 0 .6rem; color: var(--tx2); white-space: nowrap; }
+.bd.bad { border-color: var(--danger); color: var(--danger); }
+.bd.warn { border-color: var(--accent); color: var(--accent); }
+.dsub { font-size: .85rem; color: var(--tx3); margin-top: .35rem; }
+.dcard .pbar { margin-top: .6rem; }
+.dcard .btns { margin-top: .7rem; }
+.feed { border-top: 1px solid var(--bd); padding: .65rem 0; font-size: .92rem; }
+.feed .meta { font-size: .78rem; color: var(--tx3); }
+.feed q { color: var(--tx2); }
+.calc { background: var(--bg2); border: 1px solid var(--bd); border-radius: 10px; padding: .7rem; margin: .6rem 0; display: grid; gap: .5rem; }
+.calc .r { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.calc .r > * { flex: 1 1 110px; }
+.calc .r > .btn { flex: 0 0 auto; }
+.calc .res { font-size: .85rem; color: var(--tx2); }
+
+/* ================= หน้าโค้ช แบบปฏิทิน (สไตล์ TrainingPeak) ================= */
+.adm { max-width: 1180px; }
+.panel.narrow { max-width: 780px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; margin-bottom: 1.1rem; }
+.tile { background: var(--bg3); border-radius: 14px; padding: .8rem 1rem; border-top: 3px solid var(--bd2); }
+.tile b { display: block; font-family: Outfit, Prompt, sans-serif; font-size: 1.9rem; font-weight: 300; line-height: 1.25; }
+.tile span { font-size: .8rem; color: var(--tx3); }
+.tile.good { border-top-color: var(--bike); } .tile.warn { border-top-color: var(--accent); } .tile.bad { border-top-color: var(--danger); }
+.dtable { border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; }
+.dhead, .drow { display: grid; grid-template-columns: minmax(130px, 1.4fr) 128px 62px 84px 128px 96px; gap: .7rem; align-items: center; padding: .6rem .9rem; }
+.dhead { background: var(--bg3); font-size: .75rem; color: var(--tx3); }
+.drow { width: 100%; text-align: left; background: var(--bg2); border: 0; border-top: 1px solid var(--bd); }
+.drow:hover { background: var(--bg3); }
+.drow .nm b { display: block; line-height: 1.3; }
+.drow .nm small { color: var(--tx3); font-size: .75rem; }
+.dot7, .heat { display: flex; gap: 4px; }
+.dd { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bd2); }
+.dd.done { background: var(--accent); border-color: var(--accent); }
+.dd.missed { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 30%, transparent); }
+.dd.today { background: var(--tx); border-color: var(--tx); }
+.dd.rest, .dd.none { border-style: dashed; opacity: .55; }
+.hs { width: 12px; height: 22px; border-radius: 3px; background: var(--bd); }
+.hs.h0 { background: color-mix(in srgb, var(--danger) 75%, transparent); } .hs.h1 { background: var(--lv1); } .hs.h2 { background: var(--bike); }
+.seen.warn { color: var(--accent); font-weight: 500; }
+.legend { font-size: .78rem; color: var(--tx3); margin-top: .5rem; }
+@media (max-width: 900px) { .dhead { display: none; } .drow { grid-template-columns: 1fr 1fr; } .drow .nm { grid-column: 1 / -1; } }
+
+.pills { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .5rem; margin-bottom: .6rem; }
+.pill { flex: none; border: 1px solid var(--bd2); background: var(--bg3); border-radius: 20px; padding: .35rem 1rem; font-weight: 500; min-height: 40px; }
+.pill[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.phead { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .7rem; }
+.phead .wk-nav { margin: 0; flex: 0 0 auto; min-width: 250px; }
+.phead .grow { flex: 1 1 200px; }
+.wsum { display: flex; flex-wrap: wrap; gap: 1.4rem; margin: .2rem 0 .8rem; font-size: .85rem; color: var(--tx3); }
+.wsum b { color: var(--tx); font-family: Outfit, Prompt, sans-serif; font-weight: 400; font-size: 1.25rem; margin-right: .2rem; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--bd); border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; }
+.cday { background: var(--bg2); min-height: 200px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
+.cday.today { background: var(--bg3); box-shadow: inset 0 3px 0 var(--accent); }
+.cday > header { display: flex; align-items: baseline; gap: .4rem; }
+.cday > header b { font-size: .8rem; color: var(--tx3); }
+.cday > header .n { font-family: "JetBrains Mono", monospace; font-size: .85rem; }
+.cday .ck { margin-left: auto; font-size: .72rem; color: var(--tx3); }
+.cbody { display: flex; flex-direction: column; gap: .4rem; flex: 1; }
+.plus { border: 1px dashed var(--bd2); background: none; border-radius: 8px; color: var(--tx3); width: 28px; height: 28px; line-height: 1; flex: none; }
+.cempty { flex: 1; border: 1px dashed var(--bd); background: none; border-radius: 8px; color: var(--tx3); font-size: .8rem; min-height: 56px; }
+.cempty:hover, .plus:hover { border-color: var(--accent); color: var(--accent); }
+.cw { text-align: left; width: 100%; border: 0; border-left: 4px solid var(--c); background: var(--g); border-radius: 8px; padding: .4rem .5rem; display: grid; gap: .15rem; }
+.cw:hover { filter: brightness(1.15); }
+.cw .cs { font-size: .68rem; font-weight: 600; color: var(--c); }
+.cw .cn { font-size: .82rem; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.cw .cm { font-family: "JetBrains Mono", monospace; font-size: .7rem; color: var(--tx2); }
+.cw .graph { height: 22px; margin-top: .15rem; gap: 2px; }
+.cw .fbm { font-size: .7rem; color: var(--tx2); } .cw .fbm.bad { color: var(--danger); font-weight: 500; }
+.cw.done { opacity: .72; }
+.cw.miss { outline: 1px dashed var(--danger); outline-offset: -1px; }
+.dirtyflag { color: var(--accent); font-size: .85rem; align-self: center; }
+.adv { margin-top: 1rem; background: var(--bg3); border: 1px solid var(--bd); border-radius: 12px; padding: .7rem .9rem; }
+.adv summary { cursor: pointer; font-weight: 500; }
+#wdlg { width: min(720px, calc(100vw - 1.2rem)); }
+.fbbox { background: var(--bg3); border-left: 3px solid var(--accent); border-radius: 8px; padding: .6rem .8rem; margin-bottom: .8rem; font-size: .9rem; }
+.m-foot select { width: auto; flex: 1 1 140px; }
+@media (max-width: 900px) {
+  .cal { grid-template-columns: 1fr; }
+  .cday { min-height: 0; display: grid; grid-template-columns: 74px 1fr; column-gap: .6rem; }
+  .cday > header { flex-direction: column; align-items: flex-start; gap: .1rem; }
+  .cday .ck { margin-left: 0; }
+}
+
+/* ================= ปฏิทินรายเดือน (นักกีฬา) ================= */
+.mnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+.mnav b { font-size: 1.1rem; }
+.mcal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 1.6rem; }
+.mh { font-size: .75rem; color: var(--tx3); text-align: center; padding: .25rem 0; }
+.mc { background: var(--bg2); border: 1px solid transparent; border-radius: 10px; min-height: 60px; padding: .3rem .35rem; display: flex; flex-direction: column; align-items: flex-start; gap: .2rem; text-align: left; }
+.mc:disabled { opacity: .4; cursor: default; }
+.mc.out { opacity: .35; }
+.mc.today { border-color: var(--accent); }
+.mn { font-size: .8rem; color: var(--tx2); }
+.mc.today .mn { color: var(--accent); font-weight: 600; }
+.mds { display: flex; gap: 3px; flex-wrap: wrap; }
+.md { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--c); }
+.md.on { background: var(--c); }
+.mk { font-size: .68rem; color: var(--tx3); font-family: "JetBrains Mono", monospace; }
+.vh2 { font-size: 1rem; color: var(--tx3); font-weight: 500; margin: 0 0 .6rem; }
+
+/* ================= ธีม Night Track: ลู่วิ่งกลางคืน ผ้าเบอร์ (bib) ตัวเลขใหญ่แบบสกอร์บอร์ด ================= */
+:root { --shellw: 520px; }
+body { background: var(--bg); }
+.shell { max-width: var(--shellw); }
+.login { background-image: repeating-linear-gradient(180deg, transparent 0 27px, var(--lane) 27px 28px); }
+.login-card { background: var(--bg2); }
+.big, .nv, .stat b, .tile b, .ring-tx b, .wh-num, .wh-stats b, .pt b, .bib-num, .dn, .avatar { font-family: var(--display); }
+.wh { }
+/* --- ฮีโร่สรุปสัปดาห์ --- */
+.whero { position: relative; overflow: hidden; border-radius: 26px; padding: 18px 20px 18px; background: linear-gradient(160deg, var(--bg3), var(--bg2) 70%); border: 1px solid var(--bd); }
+.whero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: repeating-linear-gradient(180deg, transparent 0 23px, var(--lane) 23px 24px); -webkit-mask-image: linear-gradient(100deg, transparent 20%, #000 80%); mask-image: linear-gradient(100deg, transparent 20%, #000 80%); }
+.whero > * { position: relative; }
+.wh-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .8rem; }
+.wh-k { font-size: .75rem; letter-spacing: .14em; color: var(--tx3); font-weight: 600; text-transform: uppercase; }
+.wh-title { font-size: 1.05rem; font-weight: 600; line-height: 1.35; margin-top: .1rem; }
+.wh-sub { font-size: .82rem; color: var(--tx3); }
+.wh-big { display: flex; align-items: baseline; gap: .6rem; margin-top: .8rem; flex-wrap: wrap; }
+.wh-num { font-weight: 800; font-size: 96px; line-height: .88; letter-spacing: -.01em; }
+.wh-of { font-size: 1.05rem; color: var(--tx2); }
+.wh-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: 1rem; }
+.wh-stats b { display: block; font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.wh-stats span { font-size: .75rem; color: var(--tx3); }
+.segs { display: flex; gap: 4px; margin-top: 1rem; }
+.sg { flex: 1; height: 9px; border-radius: 3px; border: 1.5px solid var(--c); background: transparent; }
+.sg.on { background: var(--c); }
+.wnav2 { display: flex; gap: .4rem; flex: none; }
+.wnav2 button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--bd2); background: var(--bg); font-size: 1.25rem; line-height: 1; }
+.wnav2 button:disabled { opacity: .3; cursor: default; }
+.nowbtn { margin-top: .6rem; }
+/* --- ตารางรายวัน แบบ TrainingPeak --- */
+.agenda { display: grid; gap: .35rem; margin-top: 1.1rem; }
+.ag { display: grid; grid-template-columns: 52px 1fr; gap: .7rem; padding: .25rem 0; scroll-margin-top: .5rem; }
+.ag-h { display: flex; flex-direction: column; align-items: center; gap: .1rem; padding-top: .45rem; }
+.dow { font-size: .78rem; color: var(--tx3); }
+.dn { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.ag.today .dn, .ag.today .dow { color: var(--accent); }
+.ag.today .dow { font-weight: 700; }
+.dk { font-size: .66rem; color: var(--tx3); font-family: "JetBrains Mono", monospace; margin-top: .15rem; }
+.ag-b { display: grid; gap: .5rem; min-width: 0; }
+.ag-empty { color: var(--tx3); font-size: .85rem; padding: .75rem 0; border-bottom: 1px dashed var(--bd); }
+.ac { display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center; width: 100%; text-align: left; background: var(--bg2); border: 1px solid var(--bd); border-left: 4px solid var(--c); border-radius: 14px; padding: .7rem .8rem; min-height: 58px; transition: transform .12s, border-color .12s; }
+.ac:hover { transform: translateY(-1px); border-color: var(--bd2); border-left-color: var(--c); }
+.ac.st-done { background: color-mix(in srgb, var(--ok) 9%, var(--bg2)); }
+.ac.st-missed { background: color-mix(in srgb, var(--bad) 8%, var(--bg2)); }
+.ac.st-today { box-shadow: inset 0 0 0 1px var(--accent); }
+.ac.rest { background: transparent; border-style: dashed; border-left-style: dashed; min-height: 46px; color: var(--tx3); }
+.ac-ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--bd2); color: var(--tx3); }
+.ac-ic svg { width: 14px; height: 14px; }
+.st-done .ac-ic { background: var(--ok); border-color: var(--ok); color: #06140d; }
+.st-missed .ac-ic { border-color: var(--bad); color: var(--bad); }
+.st-today .ac-ic { border-color: var(--accent); color: var(--accent); }
+.ac-t { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; display: block; }
+.ac-m { display: block; font-family: "JetBrains Mono", monospace; font-size: .76rem; color: var(--tx2); margin-top: .12rem; }
+.ac .graph { height: 24px; margin-top: .45rem; gap: 2px; }
+.ac-rpe { font-family: "JetBrains Mono", monospace; font-size: .7rem; border: 1px solid var(--bd2); border-radius: 20px; padding: 0 .5rem; color: var(--tx2); white-space: nowrap; }
+/* --- แผ่นรายละเอียดเวิร์คเอาต์ (bottom sheet) --- */
+dialog.sheet { width: min(560px, 100%); max-height: 90vh; margin: auto auto 0; border-radius: 26px 26px 0 0; border-bottom: 0; }
+@media (min-width: 640px) { dialog.sheet { margin: auto; border-radius: 26px; border-bottom: 1px solid var(--bd2); } }
+dialog.sheet[open] { animation: rise .22s ease-out; }
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } }
+.sh-head { padding: 1.2rem 1.4rem 1rem; border-bottom: 1px solid var(--bd); display: flex; justify-content: space-between; gap: 1rem; background: linear-gradient(180deg, var(--g, transparent), transparent); }
+.stchip { display: inline-block; font-size: .75rem; font-weight: 600; padding: .05rem .7rem; border-radius: 20px; border: 1px solid var(--bd2); margin-left: .4rem; color: var(--tx2); }
+.stchip.st-done { color: var(--ok); border-color: var(--ok); } .stchip.st-missed { color: var(--bad); border-color: var(--bad); } .stchip.st-today { color: var(--accent); border-color: var(--accent); }
+.m-foot.col { display: grid; gap: .5rem; }
+.m-foot .donebtn { margin-top: 0; }
+/* --- ปฏิทินรายเดือน: ย้อมสีตามสถานะ --- */
+.mc.ok { background: color-mix(in srgb, var(--ok) 12%, var(--bg2)); }
+.mc.bad { background: color-mix(in srgb, var(--bad) 10%, var(--bg2)); }
+/* --- สถิติ --- */
+.card2 { background: var(--bg2); border: 1px solid var(--bd); border-radius: 20px; padding: 1rem 1.1rem; margin-bottom: .9rem; }
+.card2 h3 { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--tx3); font-weight: 600; margin-bottom: .7rem; }
+.ptiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+.pt b { display: block; font-size: 2.1rem; font-weight: 700; line-height: 1.05; }
+.pt span { font-size: .75rem; color: var(--tx3); display: block; }
+.pt .tone { font-size: .75rem; font-weight: 600; }
+.tone.ok { color: var(--ok); } .tone.warn { color: var(--warn); } .tone.bad { color: var(--bad); } .tone.ice { color: var(--ice); }
+.pchart { width: 100%; height: auto; display: block; }
+.pchart .gl { stroke: var(--bd); stroke-width: 1; } .pchart .zl { stroke: var(--bd2); stroke-dasharray: 3 3; } .pchart .nowl { stroke: var(--bd2); }
+.pchart .gt { fill: var(--tx3); font-size: 10px; font-family: "JetBrains Mono", monospace; }
+.pchart path.l-ctl { stroke: var(--ice); stroke-width: 2.6; stroke-linejoin: round; } .pchart path.l-atl { stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; } .pchart path.l-tsb { stroke: var(--ok); stroke-width: 2; stroke-linejoin: round; }
+.pchart circle.l-ctl { fill: var(--ice); } .pchart circle.l-atl { fill: var(--accent); } .pchart circle.l-tsb { fill: var(--ok); }
+.legend2 { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .8rem; color: var(--tx2); margin-top: .6rem; }
+.legend2 i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; margin-right: .4rem; vertical-align: middle; }
+.note { font-size: .78rem; color: var(--tx3); margin-top: .6rem; }
+.vol { display: flex; gap: .45rem; align-items: flex-end; }
+.vc { flex: 1; display: grid; gap: .2rem; justify-items: center; min-width: 0; }
+.vb { position: relative; height: 112px; width: 100%; }
+.vb i { position: absolute; bottom: 0; left: 15%; width: 70%; border-radius: 6px 6px 2px 2px; }
+.vb .p { border: 1.5px solid var(--bd2); } .vb .d { background: var(--accent); }
+.vk { font-size: .72rem; font-family: "JetBrains Mono", monospace; color: var(--tx2); }
+.vl { font-size: .72rem; color: var(--tx3); }
+.vc.now .vl { color: var(--accent); font-weight: 700; }
+/* --- เพซเป็นแท่งตามความเร็ว --- */
+.pz { display: grid; grid-template-columns: minmax(96px, auto) 1fr auto; gap: .8rem; align-items: center; }
+.pzbar { height: 8px; background: var(--bd); border-radius: 4px; overflow: hidden; }
+.pzbar i { display: block; height: 100%; background: var(--c); border-radius: 4px; }
+/* --- โปรไฟล์ + ผ้าเบอร์ --- */
+.avatar { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem; font-weight: 800; background: var(--bg3); border: 2px solid var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); margin: 0 auto .7rem; }
+.who { text-align: center; }
+.who h1 { font-size: 1.35rem; font-weight: 600; }
+.who p { color: var(--tx3); font-size: .85rem; }
+.bib { position: relative; background: var(--chalk); color: #0b0d12; border-radius: 16px; padding: 16px 20px 14px; margin: 1.3rem 0 1.4rem; box-shadow: 0 14px 34px rgba(0,0,0,.35); transform: rotate(-.9deg); }
+.bib::before, .bib::after { content: ""; position: absolute; top: 50%; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); transform: translateY(-50%); box-shadow: inset 0 1px 3px rgba(0,0,0,.25); }
+.bib::before { left: -11px; } .bib::after { right: -11px; }
+.bib-top { display: flex; justify-content: space-between; font-size: .7rem; letter-spacing: .18em; font-weight: 700; text-transform: uppercase; }
+.bib-name { font-family: var(--display); font-weight: 800; font-size: 1.75rem; line-height: 1.05; margin: .5rem 0 .1rem; text-transform: uppercase; overflow-wrap: anywhere; }
+.bib-mid { display: flex; align-items: baseline; gap: .6rem; }
+.bib-num { font-weight: 800; font-size: 104px; line-height: .9; letter-spacing: -.01em; }
+.bib-cap { font-weight: 600; }
+.bib-bot { display: flex; justify-content: space-between; gap: 1rem; border-top: 2px dashed rgba(11,13,18,.35); padding-top: .55rem; margin-top: .6rem; font-weight: 600; font-size: .9rem; }
+.pin { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
+.pin.a { top: 9px; left: 9px; } .pin.b { top: 9px; right: 9px; } .pin.c { bottom: 9px; left: 9px; } .pin.d { bottom: 9px; right: 9px; }
+.bdgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; }
+.bdg { border: 1px solid var(--bd); border-radius: 14px; padding: .7rem .8rem; background: var(--bg3); opacity: .55; }
+.bdg b { display: block; font-family: var(--display); font-size: 1.5rem; line-height: 1.1; }
+.bdg span { font-size: .78rem; color: var(--tx2); }
+.bdg.on { opacity: 1; border-color: var(--accent); box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 24%, transparent); }
+.nextgoal { font-size: .85rem; color: var(--tx2); margin-top: .8rem; }
+@media (prefers-reduced-motion: reduce) { dialog.sheet[open] { animation: none; } .bib { transform: none; } }
+@media (max-width: 380px) { .wh-num { font-size: 80px; } .bib-num { font-size: 88px; } }
+
+/* ================= เลเยอร์สไตล์สปอร์ต: เส้นพุ่ง มุมตัดเฉียง ตัวเลขเอียงแบบสกอร์บอร์ด ================= */
+.wh-num, .big, .dn, .bib-num, .pt b, .stat b, .wh-stats b, .bdg b, .tile b { font-style: italic; letter-spacing: -.01em; }
+.whero { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); border-radius: 0; border: 0; box-shadow: inset 4px 0 0 var(--accent); }
+.whero::after { content: ""; position: absolute; top: 0; right: 0; width: 46%; height: 100%; pointer-events: none; background-image: repeating-linear-gradient(115deg, transparent 0 16px, color-mix(in srgb, var(--accent) 16%, transparent) 16px 19px); -webkit-mask-image: linear-gradient(100deg, transparent 5%, #000 95%); mask-image: linear-gradient(100deg, transparent 5%, #000 95%); }
+.wh-k { color: var(--accent); }
+.wh-num { display: inline-block; }
+.sg { height: 10px; border: 0; border-radius: 0; background: color-mix(in srgb, var(--c) 26%, transparent); clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+.sg.on { background: var(--c); }
+.segs { gap: 3px; }
+.vh { font-family: var(--display); font-style: italic; text-transform: uppercase; letter-spacing: .02em; font-weight: 800; font-size: 1.9rem; display: flex; align-items: center; gap: .6rem; }
+.vh::before { content: ""; width: 12px; height: 26px; background: var(--accent); transform: skewX(-18deg); flex: none; }
+.vh2 { text-transform: uppercase; letter-spacing: .1em; font-size: .78rem; }
+.ac { border-radius: 4px 14px 14px 4px; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); border-right: 0; border-top-color: transparent; }
+.ac.rest { clip-path: none; border-radius: 4px 14px 14px 4px; }
+.ac:hover { transform: translateX(3px); }
+.ag.today .dn { text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 55%, transparent); }
+.ag.today::before { content: ""; }
+.donebtn { border-radius: 0; clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%); font-weight: 700; letter-spacing: .02em; }
+.donebtn.off { background: var(--bg3); border: 0; color: var(--tx); }
+.btn.primary { clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); border-radius: 0; padding-inline: 1.4rem; }
+.stat, .pt, .card2, .bdg { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); border-radius: 0; }
+.card2 { border: 0; background: var(--bg2); box-shadow: inset 0 3px 0 var(--bd2); }
+.stat { border: 0; border-bottom: 3px solid var(--accent); background: var(--bg2); }
+.mc { border-radius: 4px; clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%); }
+.mc.today { box-shadow: inset 0 0 0 2px var(--accent); border-color: transparent; }
+.crow { border-radius: 0; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.pz { border-radius: 0; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); }
+.pzbar { clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); border-radius: 0; }
+.pzbar i { border-radius: 0; }
+.vb i { border-radius: 0; clip-path: polygon(0 4px, 100% 0, 100% 100%, 0 100%); }
+.stchip { border-radius: 0; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); padding-inline: .9rem; border: 0; background: var(--bg3); }
+.stchip.st-done { background: color-mix(in srgb, var(--ok) 22%, transparent); } .stchip.st-missed { background: color-mix(in srgb, var(--bad) 22%, transparent); } .stchip.st-today { background: var(--accent-g); }
+.avatar { transform: skewX(-6deg); border-radius: 18px; }
+.wnav2 button { border-radius: 0; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); border: 0; background: var(--bg3); width: 46px; }
+dialog.sheet { clip-path: none; }
+.sh-head { background: linear-gradient(100deg, color-mix(in srgb, var(--c, var(--accent)) 28%, transparent), transparent 70%); }
+@media (prefers-reduced-motion: reduce) { .ac:hover { transform: none; } }
+
+/* ================= ปุ่มทรงเอียง (parallelogram) ทุกปุ่มในแอป =================
+   ใช้ clip-path ตัดมุมให้เอียงเหมือนปุ่มหลัก ตัวอักษรยังตั้งตรงอ่านง่าย
+   ปรับความเอียงของแต่ละปุ่มด้วยตัวแปร --sk */
+.btn, .donebtn.off, .pill, .scale button, .chip span, .tabs button, .x, .plus, .cempty, .wnav button {
+  --sk: 10px;
+  border: 0; border-radius: 0;
+  clip-path: polygon(var(--sk) 0, 100% 0, calc(100% - var(--sk)) 100%, 0 100%);
+  transition: background .15s, color .15s, filter .15s;
+}
+.btn, .donebtn.off, .pill, .scale button, .chip span, .tabs button, .x, .plus, .cempty, .wnav button { background: var(--bg4); }
+.btn { padding-inline: 1.4rem; }
+.btn.sm { --sk: 8px; padding-inline: 1.05rem; }
+.btn.primary { background: var(--accent); }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: .5; }
+
+/* hover (ยกเว้นปุ่มหลักที่ใช้ brightness อยู่แล้ว และปุ่มที่ปิดใช้งาน) */
+.btn:not(.primary):not(:disabled):hover, .donebtn.off:hover, .pill:hover, .scale button:hover,
+.chip:hover span, .tabs button:hover, .x:hover, .wnav button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--tx) 12%, var(--bg4));
+}
+
+/* ปุ่มคำนวณเพซ: เดิมใช้เส้นขอบสีส้ม ใช้พื้นสีส้มจางแทน */
+.pace-btn { background: var(--accent-g); color: var(--accent); }
+.pace-btn:hover { background: color-mix(in srgb, var(--accent) 30%, transparent) !important; }
+
+/* ชิปตัวเลือก (RPE / ความรู้สึก / เลือกนักกีฬา / แท็บ) */
+.pill { --sk: 10px; padding-inline: 1.25rem; }
+.scale button { --sk: 9px; font-weight: 600; }
+.scale.five button { --sk: 8px; }
+.pill[aria-pressed="true"], .scale button[aria-pressed="true"], .tabs button[aria-selected="true"] {
+  background: var(--accent); color: var(--on-accent); font-weight: 700; box-shadow: none;
+}
+.chip span { --sk: 8px; padding-inline: 1.1rem; }
+.chip input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.chip input:checked + span small { color: inherit; opacity: .75; }
+
+/* แท็บของโค้ช: แยกเป็นปุ่มเอียงเรียงกัน ไม่ใช้กรอบมนครอบ */
+.tabs { background: transparent; padding: 0; border-radius: 0; gap: 6px; }
+.tabs button { padding: .6rem .5rem; font-weight: 600; }
+
+/* ปุ่มปิด (✕) และปุ่ม + */
+.x { --sk: 8px; width: 42px; height: 36px; }
+.plus { --sk: 6px; width: 34px; height: 28px; }
+.plus:hover, .cempty:hover { background: var(--accent-g); color: var(--accent); }
+.cempty { --sk: 10px; background: var(--bg3); }
+
+/* วงกลมวันที่ในแถบสัปดาห์ → สี่เหลี่ยมเอียง
+   วาดรูปร่างด้วย ::before เพื่อให้เส้นประ (วันพัก) และวงเลือก (วันที่เลือก) ยังเห็นครบ */
+.dc { position: relative; isolation: isolate; width: 40px; height: 38px; border: 0; border-radius: 0; background: transparent; }
+.dc::before { content: ""; position: absolute; inset: 0; z-index: -1; box-sizing: border-box; transform: skewX(-14deg); border: 2px solid var(--bd2); background: transparent; }
+.dc.done, .dc.today { background: transparent; }
+.dc.done::before { background: var(--accent); border-color: var(--accent); }
+.dc.today::before { background: var(--tx); border-color: var(--tx); }
+.dc.rest::before { border-style: dashed; }
+.dy.sel .dc { box-shadow: none; }
+.dy.sel .dc::before { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+
+/* โฟกัสด้วยคีย์บอร์ด: clip-path ตัดเส้น outline ปกติ จึงวาดไว้ด้านในแทน */
+.btn:focus-visible, .donebtn:focus-visible, .pill:focus-visible, .scale button:focus-visible, .tabs button:focus-visible,
+.x:focus-visible, .plus:focus-visible, .cempty:focus-visible, .tb:focus-visible, .wnav2 button:focus-visible,
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; }
+.dy:focus-visible { outline: none; }
+.dy:focus-visible .dc::before { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--tx); }

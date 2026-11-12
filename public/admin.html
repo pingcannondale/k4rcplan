@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="th" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>โค้ช · K4RC Training Plan</title>
+<meta name="theme-color" content="#202124">
+<meta name="application-name" content="K4RC Training Plan">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="K4RC Training Plan">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32-v5.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-v5.png">
+<link rel="preload" href="fonts/plus-jakarta-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/prompt-thai-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="kotcha.css">
+<link rel="stylesheet" href="ios27.css">
+<link rel="stylesheet" href="k4rc-ui.css">
+<link rel="stylesheet" href="night.css">
+</head>
+<body class="coach">
+<main class="adm" id="root"></main>
+<dialog id="wdlg" aria-labelledby="wdlg-title"></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="common.js"></script>
+<script src="steps.js"></script>
+<script src="vdot.js"></script>
+<script>
+addEventListener("click", (e) => { if (e.target.closest("[data-act=install]")) installApp(); });
+document.documentElement.dataset.theme = "light"; store.del("rp_theme");
+let pw = "", athletes = [], cur = "", tab = "dash", plan = null, week = mondayOf(todayStr()), draft = null, dirty = false, doneMap = {}, fbMap = {}, openIJ = null, advOpen = false;
+let shareSel = new Set(), shareScope = "all";
+try { pw = sessionStorage.getItem("pw") || ""; } catch {}
+const $ = (s) => document.querySelector(s);
+const root = $("#root");
+const SPORTS = ["run", "strength", "rest", "race", "bike", "swim", "brick"];
+
+function toast(msg, bad) {
+  const t = $("#toast");
+  t.textContent = msg; t.className = "toast" + (bad ? " bad" : ""); t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 4000);
+}
+async function api(action, body = {}) {
+  const r = await fetch("/api/admin", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-admin-password": pw },
+    body: JSON.stringify({ action, ...body }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || "เกิดข้อผิดพลาด"), { status: r.status });
+  return data;
+}
+const guard = () => { if (dirty && !confirm("ยังไม่ได้บันทึก ทิ้งการแก้ไขนี้ไหม?")) return false; dirty = false; return true; };
+const genPw = () => { const c = "abcdefghjkmnpqrstuvwxyz23456789"; return Array.from(crypto.getRandomValues(new Uint8Array(8)), (n) => c[n % c.length]).join(""); };
+
+/* ---------- เข้าสู่ระบบโค้ช ---------- */
+function renderLogin(msg) {
+  root.innerHTML = `<form class="login-card" id="lf" style="margin:12vh auto 0"><i class="logo" role="img" aria-label="K4RC Training Plan"></i><h1 class="brand center-tx" style="font-size:1.5rem">เข้าสู่ระบบโค้ช</h1>
+    <label class="l" for="apw">รหัสผ่านโค้ช</label><input id="apw" type="password" autocomplete="current-password" required>
+    <p class="err" role="alert">${esc(msg || "")}</p><button class="btn primary block" type="submit">เข้าสู่ระบบ</button></form>`;
+  $("#lf").onsubmit = (e) => { e.preventDefault(); pw = $("#apw").value; boot(); };
+}
+async function boot() {
+  try {
+    athletes = (await api("athletes")).athletes;
+    try { sessionStorage.setItem("pw", pw); } catch {}
+    cur = cur || athletes[0]?.id || "";
+    renderMain();
+  } catch (e) {
+    if (e.status === 401) { pw = ""; try { sessionStorage.removeItem("pw"); } catch {} }
+    renderLogin(e.message);
+  }
+}
+function logout() { pw = ""; try { sessionStorage.removeItem("pw"); } catch {} renderLogin(); }
+
+/* ---------- โครงหลัก ---------- */
+const TABS_C = [
+  ["dash", "ภาพรวม", '<rect x="3.5" y="3.5" width="7" height="9" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="15.5" width="7" height="5" rx="2"/>'],
+  ["ath", "นักกีฬา", '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.5-3.5 3-5.5 5.5-5.5s5 2 5.5 5.5M16 5.2a3.2 3.2 0 0 1 0 5.8M17.5 14.8c1.8.6 3 2.4 3.3 5.2"/>'],
+  ["ext", "นักกีฬานอก", '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5s1.2-6.1 3.6-8.5z"/>'],
+  ["plan", "แผนซ้อม", '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>']];
+const XHEAD = { dash: ["ภาพรวม", "ภาพรวมโค้ช"], ath: ["จัดการบัญชี", "นักกีฬา"], ext: ["สมัครเองผ่านปุ่ม “สร้างบัญชี” ในหน้าเข้าสู่ระบบ", "นักกีฬานอก"], plan: ["ปฏิทินของนักกีฬา", "แผนซ้อม"] };
+function renderMain() {
+  const h = XHEAD[tab];
+  root.innerHTML = `<nav class="xcn" aria-label="เมนูโค้ช"><div class="xbrand"><img src="icons/icon-192-v5.png" alt="" width="44" height="44"><div><b>K4RC Training Plan</b><span>ระบบโค้ช</span></div></div>
+    <div class="tabs" role="tablist" aria-label="เมนูโค้ช" style="--i:${TABS_C.findIndex((x) => x[0] === tab)}"><i class="ind" aria-hidden="true"></i>
+      ${TABS_C.map(([k, l, ic]) => `<button role="tab" aria-selected="${tab === k}" aria-label="${l}" onclick="setTab('${k}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span class="lbl">${l}${k === "ath" ? ` (${athletes.length})` : k === "ext" ? ` (${athletes.filter((a) => a.external).length})` : ""}</span></button>`).join("")}
+    </div><div class="xcn-f"><div class="thm-row">${k4Theme.seg()}</div>${installBtn("btn sm")}<button class="xout" onclick="logout()">ออกจากระบบ</button></div></nav>
+    <div class="xhead"><i class="hlogo" role="img" aria-label="K4RC"></i><p class="xm">${h[0]}</p><h1>${h[1]}${tab === "ath" ? ` (${athletes.length})` : tab === "ext" ? ` (${athletes.filter((a) => a.external).length})` : ""}</h1><div class="thm-top">${k4Theme.seg()}</div></div>
+    <section class="panel${tab === "ath" ? " narrow" : ""}" id="panel"></section>`;
+  tab === "dash" ? loadDash() : tab === "ath" ? renderAthletes() : tab === "ext" ? loadExt() : loadPlan();
+}
+function setTab(t) { if (!guard()) return; if (t !== tab && wdlg.open) closeW(); tab = t; renderMain(); }
+async function refresh() { athletes = (await api("athletes")).athletes; if (!athletes.some((a) => a.id === cur)) cur = athletes[0]?.id || ""; renderMain(); }
+
+/* ---------- แท็บนักกีฬา ---------- */
+function renderAthletes() {
+  $("#panel").classList.add("narrow");
+  $("#panel").innerHTML = `
+    <h2>สร้างบัญชีนักกีฬา</h2>
+    <div class="addrow">
+      <input id="nn" placeholder="ชื่อ" aria-label="ชื่อนักกีฬาใหม่">
+      <input id="ne" type="email" placeholder="อีเมลที่ใช้ล็อกอิน" aria-label="อีเมลนักกีฬาใหม่">
+      <div class="pwrow"><input id="np" placeholder="รหัสผ่าน (6 ตัวขึ้นไป)" aria-label="รหัสผ่านนักกีฬาใหม่"><button class="btn" onclick="$('#np').value=genPw()">สุ่ม</button></div>
+      <button class="btn primary" onclick="saveA()">สร้าง</button></div>
+    <p class="prog" style="margin-top:.5rem">จดอีเมลกับรหัสผ่านส่งให้นักกีฬาเอง ระบบเก็บรหัสแบบเข้ารหัส ดูย้อนหลังไม่ได้ ถ้าลืมให้ตั้งรหัสใหม่</p>
+    <h2>รายชื่อ</h2>
+    ${athletes.length ? athletes.map((a) => `<div class="arow">
+      <input id="n-${a.id}" value="${esc(a.name)}" aria-label="ชื่อ">
+      <input id="e-${a.id}" type="email" value="${esc(a.email)}" aria-label="อีเมล">
+      <div class="pwrow"><input id="p-${a.id}" placeholder="${a.hasPassword ? "รหัสใหม่ (เว้นว่าง = ไม่เปลี่ยน)" : "ยังไม่ได้ตั้งรหัสผ่าน"}" aria-label="รหัสผ่านใหม่"><button class="btn" onclick="$('#p-${a.id}').value=genPw()">สุ่ม</button></div>
+      ${a.external ? `<div class="prog"><span class="bd">นักกีฬานอก</span> PB 5K ${esc(a.ext.pb5k)} · ฮาล์ฟคาดการณ์ ${esc(a.ext.predictedHalf)} (${esc(a.ext.predictedPace)}/กม.) · ${esc(a.ext.planLabel)}</div>` : ""}
+      <div class="prog">${a.event ? `แผน: ${esc(a.event)} · ทำแล้ว ${a.done}/${a.total}` : "ยังไม่มีแผน"}</div>
+      <details><summary>เพซของ ${esc(a.name)} ${a.paces ? `<span class="prog">· ตั้งแล้ว ${PACES.filter((p) => a.paces.values[p.k]).length}/${PACES.length}</span>` : `<span class="prog">· ยังไม่ได้ตั้ง</span>`}</summary>
+        <div class="calc"><div class="m-sec" style="margin:0;font-size:.85rem">ตัวช่วยคำนวณเพซจากเวลาแข่งล่าสุด (เติมให้ทุกช่อง แล้วโค้ชแก้ต่อได้)</div>
+          <div class="r"><select id="cd-${a.id}" aria-label="ระยะแข่ง"><option value="5k">5 กม.</option><option value="10k">10 กม.</option><option value="half">ฮาล์ฟมาราธอน</option><option value="full">มาราธอน</option></select>
+            <input id="ct-${a.id}" placeholder="เวลา เช่น 23:20 หรือ 1:45:00" aria-label="เวลาแข่ง" inputmode="numeric"><button class="btn sm" onclick="calcPaces('${a.id}')">คำนวณ</button></div>
+          <div class="res" id="cr-${a.id}" role="status"></div></div>
+        <div class="pace-grid">${PACES.map((p) => `<label>${p.label}<input id="pc-${p.k}-${a.id}" value="${esc(a.paces?.values[p.k] || "")}" placeholder="เช่น 5:30 หรือ 5:15-5:45" aria-label="เพซ ${p.label} ของ ${esc(a.name)}" maxlength="24"></label>`).join("")}</div>
+        <label class="l" for="pn-${a.id}" style="margin-top:0">หมายเหตุถึงนักกีฬา (ไม่บังคับ)</label>
+        <input id="pn-${a.id}" value="${esc(a.paces?.note || "")}" placeholder="เช่น ทดสอบเมื่อ ต.ค. 2569" maxlength="200">
+        <p class="prog" style="margin:.4rem 0">ใส่เป็นนาที/กม. ระบบต่อท้าย "/กม." ให้เอง เว้นว่างทุกช่อง = ลบเพซของคนนี้</p>
+        <button class="btn primary" onclick="savePaces('${a.id}')">บันทึกเพซ</button></details>
+      ${a.profile ? `<details><summary>ข้อมูลของ ${esc(a.name)} <span class="prog">· นักกีฬากรอกเอง</span></summary><div class="prog" style="line-height:1.8">${profLine(a.profile)}</div></details>` : ""}
+      <details><summary>ข้อความถึง ${esc(a.name)} <span class="prog">· ${a.messages?.length ? `ส่งล่าสุด ${a.messages.length} ข้อความ` : "ยังไม่มี"}</span></summary>
+        <label class="l" for="mg-${a.id}" style="margin-top:0">ข้อความที่นักกีฬาจะเห็นที่ปุ่มข้อความบนหน้าแรกของแอป</label>
+        <textarea id="mg-${a.id}" rows="3" maxlength="500" placeholder="เช่น สัปดาห์นี้ลดความหนักลงนะ ถ้าขาตึงให้พักเต็มที่"></textarea>
+        <button class="btn primary" style="margin-top:.5rem" onclick="sendMsg('${a.id}')">ส่งข้อความ</button>
+        ${(a.messages || []).map((m) => `<div class="prog" style="margin-top:.6rem">${esc(msgTime(m.at))} · ${esc(m.text)} <button class="btn sm danger" onclick="delMsg('${a.id}','${m.id}')">ลบ</button></div>`).join("")}</details>
+      <div class="btns"><button class="btn" onclick="saveA('${a.id}')">บันทึก</button><button class="btn danger" onclick="delA('${a.id}')">ลบ</button></div></div>`).join("") : `<p class="notice">ยังไม่มีนักกีฬา</p>`}
+    <h2>สำรอง / กู้คืนข้อมูลทั้งระบบ</h2>
+    <p class="prog">ดาวน์โหลดนักกีฬา แผน เพซ ประวัติการติ๊กทำแล้ว และความรู้สึกหลังซ้อมทั้งหมดเป็นไฟล์เดียว เก็บไว้ในเครื่องหรือ Google Drive ได้</p>
+    <label class="chk"><input type="checkbox" id="bk-login" checked> รวมรหัสผ่านแบบเข้ารหัส (กู้คืนแล้วนักกีฬาล็อกอินได้เหมือนเดิม) · เก็บไฟล์นี้ให้ปลอดภัย</label>
+    <div class="btns" style="margin-top:.6rem"><button class="btn primary" onclick="exportAll()">ดาวน์โหลด backup ทั้งหมด</button>
+      <label class="btn" style="cursor:pointer">กู้คืนจากไฟล์ backup<input type="file" accept=".json,application/json" hidden onchange="restoreFile(this)"></label></div>`;
+}
+async function saveA(id) {
+  const g = (p) => (id ? $(`#${p}-${id}`) : $(`#${{ n: "nn", e: "ne", p: "np" }[p]}`)).value;
+  try {
+    await api("saveAthlete", { id, name: g("n"), email: g("e"), password: g("p") });
+    toast(id ? "บันทึกแล้ว" : "สร้างบัญชีแล้ว อย่าลืมส่งอีเมลกับรหัสผ่านให้นักกีฬา");
+    await refresh();
+  } catch (e) { toast(e.message, 1); }
+}
+async function savePaces(id) {
+  const values = {}; for (const p of PACES) values[p.k] = $(`#pc-${p.k}-${id}`).value;
+  try {
+    const r = await api("savePaces", { id, values, note: $(`#pn-${id}`).value });
+    toast(r.paces ? "บันทึกเพซแล้ว" : "ลบเพซของคนนี้แล้ว");
+    athletes = (await api("athletes")).athletes; renderAthletes();
+    document.querySelector(`#pc-e-${id}`)?.closest("details")?.setAttribute("open", "");
+  } catch (e) { toast(e.message, 1); }
+}
+const profLine = (p) => [p.age ? `อายุ ${p.age} ปี` : "", p.weight ? `น้ำหนัก ${p.weight} กก.` : "", p.hrMax ? `HR สูงสุด ${p.hrMax}` : "", p.hrRest ? `HR พัก ${p.hrRest}` : "", p.goal ? `เวลาเป้าหมาย ${p.goal}` : "",
+  ...[["k5", "5K"], ["k10", "10K"], ["k21", "21K"], ["k42", "42K"]].filter(([k]) => p.pr?.[k]).map(([k, l]) => `PR ${l} ${p.pr[k]}`)].filter(Boolean).map(esc).join(" · ");
+const msgTime = (iso) => { const d = new Date(iso); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+async function sendMsg(id) {
+  const text = $(`#mg-${id}`).value.trim(); if (!text) return toast("พิมพ์ข้อความก่อนส่ง", 1);
+  try {
+    await api("sendMessage", { id, text }); toast("ส่งข้อความแล้ว นักกีฬาจะเห็นเมื่อเปิดแอป");
+    athletes = (await api("athletes")).athletes; renderAthletes();
+    document.querySelector(`#mg-${id}`)?.closest("details")?.setAttribute("open", "");
+  } catch (e) { toast(e.message, 1); }
+}
+async function delMsg(id, mid) {
+  try {
+    await api("deleteMessage", { id, mid }); toast("ลบข้อความแล้ว");
+    athletes = (await api("athletes")).athletes; renderAthletes();
+    document.querySelector(`#mg-${id}`)?.closest("details")?.setAttribute("open", "");
+  } catch (e) { toast(e.message, 1); }
+}
+async function exportAll() {
+  try {
+    const r = await api("exportAll", { withLogins: $("#bk-login").checked });
+    downloadJSON(r.backup, `k4rc-backup-${todayStr()}.json`);
+    toast(`ดาวน์โหลด backup แล้ว (${r.backup.athletes.length} คน)`);
+  } catch (e) { toast(e.message, 1); }
+}
+async function restoreFile(inp) {
+  const f = inp.files[0]; inp.value = ""; if (!f) return;
+  let bk; try { bk = JSON.parse(await f.text()); } catch { return toast("อ่านไฟล์ไม่ได้ ต้องเป็นไฟล์ .json ที่ดาวน์โหลดจากปุ่ม backup", 1); }
+  if (bk?.app !== "k4rc-training-plan" || !Array.isArray(bk.athletes)) return toast("ไม่ใช่ไฟล์ backup ทั้งระบบของ K4RC Training Plan", 1);
+  if (!confirm(`กู้คืนจากไฟล์ backup (${bk.athletes.length} คน, สำรองเมื่อ ${String(bk.exportedAt || "").slice(0, 10) || "ไม่ทราบ"})?\n\nคนที่มีรหัสเดียวกันจะถูกอัปเดตด้วยข้อมูลในไฟล์ (แผนและประวัติจะถูกแทนที่) คนที่ไม่อยู่ในไฟล์จะไม่ถูกลบ`)) return;
+  try {
+    const r = await api("restoreAll", { backup: bk });
+    toast(`กู้คืนแล้ว: เพิ่ม ${r.added} · อัปเดต ${r.updated} · แผน ${r.plans}${r.skipped ? ` · ข้าม ${r.skipped}` : ""}`);
+    await refresh();
+  } catch (e) { toast(e.message, 1); }
+}
+async function delA(id) {
+  const a = athletes.find((x) => x.id === id);
+  if (!confirm(`ลบ ${a.name} พร้อมแผนและประวัติทั้งหมด? ย้อนกลับไม่ได้`)) return;
+  try { await api("deleteAthlete", { id }); toast("ลบแล้ว"); await refresh(); } catch (e) { toast(e.message, 1); }
+}
+
+/* ---------- แท็บแผนซ้อม ---------- */
+async function loadPlan() {
+  const panel = $("#panel");
+  if (!athletes.length) { panel.innerHTML = `<p class="notice">สร้างบัญชีนักกีฬาที่แท็บ "นักกีฬา" ก่อน</p>`; return; }
+  try { const r = await api("getPlan", { id: cur }); plan = r.plan; doneMap = r.done || {}; fbMap = r.feedback || {}; } catch (e) { toast(e.message, 1); plan = null; doneMap = {}; fbMap = {}; }
+  if (plan && !plan.weeks.some((w) => w.startDate === week)) { const t = mondayOf(todayStr()); week = plan.weeks.some((w) => w.startDate === t) ? t : plan.weeks[0].startDate; }
+  loadDraft(); renderPlan();
+}
+function loadDraft() {
+  const w = plan?.weeks.find((x) => x.startDate === week);
+  draft = w ? JSON.parse(JSON.stringify(w)) : { startDate: week, phase: "", focus: "", days: Array.from({ length: 7 }, (_, i) => ({ date: addDays(week, i), workouts: [] })) };
+  dirty = false;
+}
+function planMgmtHtml(exists) {
+  return `${plan ? `<div class="two"><div><label class="l" for="pe" style="margin-top:0">ชื่อเป้าหมาย / งานแข่ง</label><input id="pe" value="${esc(plan.meta.event)}"></div>
+      <div><label class="l" for="pd" style="margin-top:0">วันแข่ง</label><input id="pd" type="date" value="${plan.meta.eventDate}"></div></div>
+      <p class="prog" style="margin:.4rem 0">${plan.weeks.length} สัปดาห์ · ${shortDate(plan.meta.planStartDate)} ถึง ${shortDate(plan.meta.planEndDate)}</p>`
+      : `<p class="prog">ยังไม่มีแผน นำเข้าไฟล์ หรือเพิ่มเวิร์คเอาต์ในปฏิทินแล้วกด บันทึกสัปดาห์นี้</p>`}
+    <div class="btns">
+      <label class="btn" style="cursor:pointer">นำเข้าไฟล์แผน (.html / .json)<input type="file" accept=".html,.json,application/json,text/html" hidden onchange="importFile(this)"></label>
+      ${plan ? `<button class="btn" onclick="saveMeta()">บันทึกชื่อและวันแข่ง</button><button class="btn" onclick="exportPlan()">ดาวน์โหลดแผนนี้ (.json)</button><button class="btn danger" onclick="delPlan()">ลบแผน</button>` : ""}</div>
+    ${shareHtml()}`;
+}
+function renderPlan() {
+  const a = athletes.find((x) => x.id === cur) || athletes[0];
+  const exists = plan?.weeks.some((w) => w.startDate === week), isNow = week === mondayOf(todayStr());
+  $("#panel").innerHTML = `
+    <div class="pills" role="group" aria-label="เลือกนักกีฬา">${athletes.map((x) => `<button class="pill" aria-pressed="${x.id === cur}" onclick="pickAth('${x.id}')">${esc(x.name)}</button>`).join("")}</div>
+    <div class="phead">
+      <div class="wk-nav"><button class="btn" onclick="shiftWeek(-1)" aria-label="สัปดาห์ก่อน">‹</button><b>${rangeLabel(week)}${exists ? "" : " (สัปดาห์ใหม่)"}</b><button class="btn" onclick="shiftWeek(1)" aria-label="สัปดาห์ถัดไป">›</button></div>
+      ${isNow ? "" : `<button class="btn sm" onclick="gotoWeek(mondayOf(todayStr()))">สัปดาห์นี้</button>`}
+      <input id="ph" class="grow" placeholder="ช่วง เช่น Base / Build / Peak / Taper" aria-label="ช่วงของแผน" value="${esc(draft.phase)}" oninput="draft.phase=this.value;dirty=true">
+      <input id="fc" class="grow" placeholder="โฟกัสของสัปดาห์" aria-label="โฟกัสของสัปดาห์" value="${esc(draft.focus)}" oninput="draft.focus=this.value;dirty=true"></div>
+    <div class="wsum" id="wsum"></div>
+    <div id="cal" class="cal"></div>
+    <details class="adv" id="adv"${advOpen ? " open" : ""} ontoggle="advOpen=this.open"><summary>จัดการแผนทั้งหมด: ชื่อเป้าหมาย, นำเข้า/ดาวน์โหลด, ส่งให้นักกีฬาคนอื่น</summary>${planMgmtHtml(exists)}</details>
+    <div class="actions"><div class="btns">
+      <button class="btn primary" onclick="saveWeek()">บันทึกสัปดาห์นี้</button>
+      <button class="btn" onclick="copyPrev()">คัดลอกจากสัปดาห์ก่อน</button>
+      <button class="btn" onclick="sendNow()">ส่งอีเมลให้ ${esc(a.name)}</button><span class="dirtyflag" id="dflag" role="status"></span></div></div>`;
+  drawEditors();
+}
+function gotoWeek(w) { if (!guard()) return; week = w; loadDraft(); renderPlan(); }
+/* ---------- ส่งแผนให้นักกีฬาคนอื่น ---------- */
+function shareHtml() {
+  if (!plan) return "";
+  const others = athletes.filter((x) => x.id !== cur);
+  if (!others.length) return `<h2>ส่งแผนนี้ให้นักกีฬาคนอื่น</h2><p class="prog">ต้องมีนักกีฬาคนอื่นอย่างน้อย 1 คน สร้างได้ที่แท็บ "นักกีฬา"</p>`;
+  return `<h2>ส่งแผนนี้ให้นักกีฬาคนอื่น</h2>
+    <div class="chips">${others.map((x) => `<label class="chip"><input type="checkbox"${shareSel.has(x.id) ? " checked" : ""} onchange="toggleShare('${x.id}',this.checked)"><span>${esc(x.name)}${x.event ? ` <small>· มีแผนอยู่</small>` : ""}</span></label>`).join("")}</div>
+    <div class="btns" style="margin:.5rem 0"><button class="btn sm" onclick="shareAll(true)">เลือกทั้งหมด</button><button class="btn sm" onclick="shareAll(false)">ล้างที่เลือก</button></div>
+    <div class="two"><div><label class="l" for="sh-scope" style="margin-top:0">ส่งอะไร</label>
+      <select id="sh-scope" onchange="shareScope=this.value;renderPlan()"><option value="all"${shareScope === "all" ? " selected" : ""}>ทั้งแผน (${plan.weeks.length} สป.)</option><option value="week"${shareScope === "week" ? " selected" : ""}>เฉพาะ ${rangeLabel(week)}</option></select></div>
+      <div><label class="l" for="sh-d" style="margin-top:0">${shareScope === "week" ? "ลงในสัปดาห์ของวันที่ (ว่าง = สัปดาห์เดิม)" : "เริ่มสัปดาห์แรกวันที่ (ว่าง = ใช้วันเดิม)"}</label><input id="sh-d" type="date"></div></div>
+    <div class="btns" style="margin-top:.6rem"><button class="btn primary" onclick="doShare()">ส่งให้ที่เลือก (${shareSel.size} คน)</button></div>
+    <p class="prog" style="margin-top:.4rem">ระบบทำสำเนาให้แต่ละคน แก้แผนของแต่ละคนแยกกันได้ต่อ ถ้าเลื่อนวันที่ ระบบจะปัดเป็นวันจันทร์ให้เอง</p>`;
+}
+function toggleShare(id, on) { on ? shareSel.add(id) : shareSel.delete(id); renderPlan(); }
+function shareAll(on) { shareSel = on ? new Set(athletes.filter((x) => x.id !== cur).map((x) => x.id)) : new Set(); renderPlan(); }
+async function doShare() {
+  if (!shareSel.size) return toast("เลือกนักกีฬาที่จะส่งให้ก่อน", 1);
+  if (dirty) return toast("กด บันทึกสัปดาห์นี้ ก่อนส่งต่อ", 1);
+  const picked = athletes.filter((x) => shareSel.has(x.id)), names = picked.map((x) => x.name).join(", ");
+  const msg = shareScope === "week"
+    ? `ส่งตาราง ${rangeLabel(week)} ให้ ${names}?\nสัปดาห์นั้นของแต่ละคนจะถูกแทนที่ สัปดาห์อื่นไม่เปลี่ยน`
+    : `ส่งแผนทั้งหมดให้ ${names}?${picked.some((x) => x.event) ? "\n\nคนที่มีแผนอยู่แล้วจะถูกแทนที่ทั้งแผน และประวัติติ๊กทำแล้วของเขาจะถูกล้าง" : ""}`;
+  if (!confirm(msg)) return;
+  const d = $("#sh-d").value;
+  try {
+    const r = await api("sharePlan", { id: cur, targets: [...shareSel], scope: shareScope, week, toWeek: d, startDate: d });
+    shareSel.clear(); toast(`ส่งแผนให้ ${r.count} คนแล้ว`); await refresh();
+  } catch (e) { toast(e.message, 1); }
+}
+function exportPlan() {
+  const a = athletes.find((x) => x.id === cur);
+  if (!plan || !a) return;
+  downloadJSON({ app: "k4rc-training-plan", kind: "plan", athlete: a.name, exportedAt: new Date().toISOString(), meta: plan.meta, weeks: plan.weeks }, `k4rc-plan-${fileSafe(a.email.split("@")[0])}-${todayStr()}.json`);
+  toast("ดาวน์โหลดแผนแล้ว นำเข้าให้คนอื่นได้ด้วยปุ่ม นำเข้าไฟล์แผน");
+}
+const calcOf = (w) => { const c = w.steps?.length ? Steps.calc(w.steps, athPaces()) : null, ok = !!c && c.ok; return { c, min: ok ? c.minutes : +w.durationMinutes || 0, m: ok ? c.meters : +w.distanceMeters || 0 }; };
+const XIC = { run: '<circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 2 2 4M11 15l-1-4 4-2 2 3 3 1M10 11l-3 2"/>', strength: '<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>', rest: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', race: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', bike: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8"/>', swim: '<path d="M3 17c2 0 2-1.5 4.5-1.5S10 17 12 17s2.5-1.5 4.5-1.5S19 17 21 17M3 12c2 0 2-1.5 4.5-1.5S10 12 12 12s2.5-1.5 4.5-1.5S19 12 21 12"/>', brick: '<rect x="4" y="5" width="16" height="6" rx="1.5"/><rect x="4" y="13" width="16" height="6" rx="1.5"/>' };
+const XCL = { run: "#d9400f", strength: "#7c4dff", rest: "#5d6a80", race: "#b7791f", bike: "#0f9d6a", swim: "#0b7fb8", brick: "#d6336c" };
+function cardHtml(w, i, j, date, today) {
+  const o = calcOf(w), on = !!doneMap[w.id], f = fbMap[w.id], rest = w.sport === "rest", miss = !on && !rest && date < today;
+  const meta = [o.m ? `${+(o.m / 1000).toFixed(1)} กม.` : "", o.min ? fmtDur(o.min) : ""].filter(Boolean).join(" · ");
+  const tag = [SPORT[w.sport], miss ? "ยังไม่ได้ทำ" : ""].filter(Boolean).join(" · ");
+  return `<button class="cw s-${w.sport}${on ? " done" : ""}${miss ? " miss" : ""}" onclick="openW(${i},${j})" aria-label="แก้ไข ${esc(w.name || SPORT[w.sport])} ${DAYS_FULL[i]}">
+    <span class="cwt"><span class="xsd" style="--z:${XCL[w.sport] || XCL.run}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${XIC[w.sport] || XIC.run}</svg></span><span class="cwn"><b class="cn">${esc(w.name || SPORT[w.sport])}</b><small class="cm">${[tag, meta].filter(Boolean).join(" · ")}</small></span>${on ? `<span class="cok">✓ ทำแล้ว</span>` : ""}</span>
+    ${o.c ? stepGraph(o.c.segs, "กราฟโครงสร้างการซ้อม") : ""}
+    ${f ? `<span class="fbm${f.pain ? " bad" : ""}">${esc([f.rpe ? `RPE ${f.rpe}` : "", f.feel ? FEEL_L[f.feel] : "", f.pain ? "เจ็บ" + (f.area ? " " + f.area : "") : "", f.km ? f.km + " กม." : ""].filter(Boolean).join(", "))}</span>` : ""}</button>`;
+}
+function drawCal() {
+  const today = todayStr(); let km = 0, min = 0, n = 0, dn = 0;
+  const html = draft.days.map((d, i) => {
+    let dk = 0;
+    d.workouts.forEach((w) => { if (w.sport === "rest") return; const o = calcOf(w); dk += o.m / 1000; km += o.m / 1000; min += o.min; n++; if (doneMap[w.id]) dn++; });
+    return `<section class="cday${d.date === today ? " today" : ""}" aria-label="${DAYS_FULL[i]} ${shortDate(d.date)}"><header><b>${DAYS[i]}</b><span class="n">${dayNum(d.date)}</span>${dk ? `<span class="ck">${+dk.toFixed(1)} กม.</span>` : ""}<button class="plus" onclick="addW(${i})" aria-label="เพิ่มเวิร์คเอาต์ ${DAYS_FULL[i]}">+</button></header>
+      <div class="cbody">${d.workouts.map((w, j) => cardHtml(w, i, j, d.date, today)).join("") || `<button class="cempty" onclick="addW(${i})">+ เพิ่ม</button>`}</div></section>`;
+  }).join("");
+  $("#cal").innerHTML = html;
+  $("#wsum").innerHTML = `<span><b>${+km.toFixed(1)}</b> กม. ตามแผน</span><span><b>${fmtDur(min) || "0 น."}</b> เวลารวม</span><span><b>${n}</b> ครั้ง</span><span><b>${dn}/${n}</b> ที่นักกีฬาทำแล้ว</span>`;
+  const fl = $("#dflag"); if (fl) fl.textContent = dirty ? "มีการแก้ไขที่ยังไม่ได้บันทึก" : "";
+}
+// วาดปฏิทิน และวาดหน้าต่างแก้ไขใหม่ถ้าเปิดอยู่ (ฟังก์ชันตัวสร้างเวิร์คเอาต์เรียกตัวนี้เมื่อโครงสร้างเปลี่ยน)
+function drawEditors() { drawCal(); if (openIJ) renderW(); }
+(() => { let dr = null, sx = 0, on = false; const wide = () => matchMedia("(min-width:900px)").matches;
+  addEventListener("pointerdown", (e) => { const n = e.target.closest(".tabs"); if (!n || wide()) return; dr = n; on = false; sx = e.clientX; });
+  addEventListener("pointermove", (e) => { if (!dr) return; if (!on) { if (Math.abs(e.clientX - sx) < 6) return; on = true; try { dr.setPointerCapture(e.pointerId); } catch {} }
+    const r = dr.getBoundingClientRect(), i = Math.max(0, Math.min(TABS_C.length - 1, Math.floor((e.clientX - r.left) / r.width * TABS_C.length))); if (TABS_C[i][0] !== tab) { setTab(TABS_C[i][0]); dr = document.querySelector(".tabs"); try { dr.setPointerCapture(e.pointerId); } catch {} } });
+  const end = () => { dr = null; on = false; }; addEventListener("pointerup", end); addEventListener("pointercancel", end); })();
+const wdlg = document.getElementById("wdlg");
+wdlg.addEventListener("close", () => { openIJ = null; wdlg.classList.remove("pre", "out"); if (document.getElementById("cal")) drawCal(); });
+wdlg.addEventListener("click", (e) => { if (e.target === wdlg) closeW(); });
+wdlg.addEventListener("cancel", (e) => { e.preventDefault(); closeW(); });
+function openW(i, j) {
+  if (wdlg.open && wdlg.classList.contains("out")) return;
+  wdlg.classList.remove("pre", "out");
+  openIJ = { i, j }; renderW();
+  if (!wdlg.open) {
+    wdlg.classList.add("pre"); wdlg.showModal(); wdlg.getBoundingClientRect();
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (wdlg.open && openIJ?.i === i && openIJ?.j === j) wdlg.classList.remove("pre"); }));
+  }
+}
+function closeW() {
+  if (!wdlg.open) { wdlg.classList.remove("pre", "out"); return; }
+  if (wdlg.classList.contains("out")) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { wdlg.close(); return; }
+  wdlg.classList.remove("pre"); wdlg.classList.add("out");
+  setTimeout(() => { if (wdlg.open) wdlg.close(); wdlg.classList.remove("pre", "out"); }, 220);
+}
+function woEditHtml(w, i, j) {
+  return `<div class="ewo s-${w.sport}">
+    <div class="row"><select aria-label="ประเภท" onchange="setW(${i},${j},'sport',this.value,this)">${SPORTS.map((s) => `<option value="${s}"${s === w.sport ? " selected" : ""}>${SPORT[s]}</option>`).join("")}</select>
+      <input placeholder="ชื่อ เช่น Easy run" aria-label="ชื่อ" value="${esc(w.name)}" oninput="setW(${i},${j},'name',this.value)"></div>
+    <div class="row2"><input id="dm-${i}-${j}" type="number" min="0" inputmode="numeric" placeholder="เวลา (นาที)" aria-label="เวลา นาที" value="${w.durationMinutes || ""}"${w.steps?.length ? " disabled" : ""} oninput="setW(${i},${j},'durationMinutes',this.value)">
+      <input id="dk-${i}-${j}" type="number" min="0" step="0.1" inputmode="decimal" placeholder="ระยะ (กม.)" aria-label="ระยะ กม." value="${w.distanceMeters ? +(w.distanceMeters / 1000).toFixed(2) : ""}"${w.steps?.length ? " disabled" : ""} oninput="setW(${i},${j},'distanceKm',this.value)"></div>
+    ${w.sport === "run" ? builderHtml(w, i, j) : w.sport === "strength" ? exHtml(w, i, j) : ""}
+    <textarea rows="2" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม" aria-label="รายละเอียด" oninput="setW(${i},${j},'humanReadable',this.value)">${esc(w.humanReadable)}</textarea></div>`;
+}
+function renderW() {
+  const { i, j } = openIJ, d = draft.days[i], w = d.workouts[j];
+  if (!w) { wdlg.close(); return; }
+  const f = fbMap[w.id], on = !!doneMap[w.id];
+  wdlg.innerHTML = `<div class="m-head"><div><h2 class="m-title" id="wdlg-title">${DAYS_FULL[i]} ${shortDate(d.date)}</h2><div class="m-date">${w.sport === "rest" ? "วันพัก" : on ? "นักกีฬาทำแล้ว" : "นักกีฬายังไม่ได้ทำ"}</div></div><button class="x" onclick="closeW()" aria-label="ปิด">✕</button></div>
+    <div class="m-body">${f ? `<div class="fbbox"><b>จากนักกีฬา:</b> ${esc(fbText(f)) || "ไม่ได้ให้คะแนน"}${f.note ? ` <q>${esc(f.note)}</q>` : ""}</div>` : ""}${woEditHtml(w, i, j)}</div>
+    <div class="m-foot btns"><button class="btn primary" onclick="closeW()">เสร็จ</button>
+      <select id="cp-day" aria-label="คัดลอกเวิร์คเอาต์นี้ไปวัน"><option value="">คัดลอกไปวัน…</option>${DAYS_FULL.map((n, k) => `<option value="${k}"${k === i ? " disabled" : ""}>${n}</option>`).join("")}</select>
+      <button class="btn" onclick="copyWTo(${i},${j})">คัดลอก</button><button class="btn danger" onclick="delW(${i},${j})">ลบ</button></div>`;
+}
+function copyWTo(i, j) {
+  const k = $("#cp-day").value; if (k === "") return toast("เลือกวันที่จะคัดลอกไปก่อน", 1);
+  const w = JSON.parse(JSON.stringify(draft.days[i].workouts[j])); w.id = uid();
+  draft.days[+k].workouts.push(w); dirty = true; drawCal(); toast(`คัดลอกไป${DAYS_FULL[+k]}แล้ว`);
+}
+/* ---------- ภาพรวมของโค้ช ---------- */
+const FEEL_L = ["", "แย่มาก", "แย่", "ปกติ", "ดี", "ดีมาก"];
+const fmtMin = (m) => { const t = Math.round(m * 60), h = Math.floor(t / 3600), mm = Math.floor((t % 3600) / 60), sc = t % 60, z = (n) => String(n).padStart(2, "0"); return h ? `${h}:${z(mm)}:${z(sc)}` : sc ? `${mm}:${z(sc)}` : String(mm); };
+const fbText = (f) => [f.rpe ? `เหนื่อย ${f.rpe}/10` : "", f.feel ? `รู้สึก${FEEL_L[f.feel]}` : "", f.pain ? "มีอาการเจ็บ" + (f.area ? " (" + f.area + ")" : "") : "", f.km || f.min ? "วิ่งจริง " + [f.km ? f.km + " กม." : "", f.min ? fmtMin(f.min) + (f.min >= 60 ? " ชม." : " นาที") : ""].filter(Boolean).join(" ") : "", f.hr ? `HR เฉลี่ย ${f.hr}` : ""].filter(Boolean).join(", ");
+async function loadDash() {
+  const panel = $("#panel"); panel.innerHTML = `<p class="prog">กำลังโหลด…</p>`;
+  let d; try { d = await api("dashboard"); } catch (e) { panel.innerHTML = ""; return toast(e.message, 1); }
+  const A = d?.athletes || [];
+  if (!A.length) { panel.innerHTML = `<p class="notice">ยังไม่มีนักกีฬา ไปสร้างที่แท็บ "นักกีฬา" ก่อน</p>`; return; }
+  const away = (a) => a.hasPlan && (a.daysSince === null || a.daysSince >= 3);
+  const need = (a) => a.pain || a.lowFeel || a.missed >= 2 || away(a);
+  const att = A.filter(need).sort((p, q) => (q.pain - p.pain) || (q.missed - p.missed));
+  const due = A.reduce((s, a) => s + a.dueN, 0), dueDone = A.reduce((s, a) => s + a.dueDone, 0), pct = due ? Math.round((dueDone / due) * 100) : 0;
+  const reasons = (a) => [a.pain ? `<span class="bd bad">มีอาการเจ็บ/ไม่สบาย</span>` : "", a.lowFeel ? `<span class="bd bad">รู้สึกแย่</span>` : "", a.highRpe ? `<span class="bd warn">เหนื่อยมาก (RPE 9+)</span>` : "",
+    a.missed ? `<span class="bd warn">ค้าง ${a.missed} ครั้ง</span>` : "", away(a) ? `<span class="bd warn">${a.daysSince === null ? "ยังไม่เคยเข้าแอป" : `ไม่ได้เข้า ${a.daysSince} วัน`}</span>` : ""].join("");
+  const seenTx = (a) => (a.daysSince === null ? "ยังไม่เคยเข้า" : a.daysSince === 0 ? "วันนี้" : `${a.daysSince} วันก่อน`);
+  const DSTATE = { done: "ทำแล้ว", missed: "ค้าง", today: "วันนี้", planned: "ยังไม่ถึง", rest: "พัก", none: "ไม่มีตาราง" };
+  panel.innerHTML = `<div class="tiles">
+      <div class="tile"><b>${A.length}</b><span>นักกีฬา</span></div>
+      <div class="tile ${!due ? "" : pct >= 80 ? "good" : pct >= 50 ? "warn" : "bad"}"><b>${due ? pct + "%" : "–"}</b><span>ทำตามแผนสัปดาห์นี้ (ถึงวันนี้ ${dueDone}/${due} ครั้ง)</span></div>
+      <div class="tile ${att.length ? "bad" : "good"}"><b>${att.length}</b><span>ต้องดูแลเป็นพิเศษ</span></div>
+      <div class="tile ${A.some(away) ? "warn" : ""}"><b>${A.filter(away).length}</b><span>ไม่ได้เข้าแอป 3 วันขึ้นไป</span></div></div>
+    <h2 style="margin-top:0">ต้องดูแลก่อน</h2>
+    ${att.length ? `<div class="ag">` + att.map((a) => `<div class="dcard"><div class="dc-top"><b>${esc(a.name)}</b><div class="bds">${reasons(a)}</div></div>
+        ${a.latest ? `<div class="dsub">ล่าสุด: ${esc(a.latest.workout)} (${shortDate(a.latest.date)}) ${esc(fbText(a.latest))}${a.latest.note ? ` <q>${esc(a.latest.note)}</q>` : ""}</div>` : ""}
+        <div class="btns"><button class="btn sm" onclick="goPlan('${a.id}')">เปิดปฏิทินแผน</button></div></div>`).join("") + `</div>` : `<p class="notice">ทุกคนปกติ ไม่มีใครต้องดูแลเป็นพิเศษ</p>`}
+    <h2>นักกีฬาทั้งหมด (สัปดาห์ ${rangeLabel(d.week)})</h2>
+    <div class="dtable" role="table" aria-label="ภาพรวมนักกีฬา">
+      <div class="dhead" role="row"><span>นักกีฬา</span><span>สัปดาห์นี้</span><span>ทำแล้ว</span><span>กม.</span><span>8 สัปดาห์ล่าสุด</span><span>เข้าล่าสุด</span></div>
+      ${[...A].sort((p, q) => p.name.localeCompare(q.name, "th")).map((a) => `<button class="drow" role="row" onclick="goPlan('${a.id}')" aria-label="เปิดปฏิทินแผนของ ${esc(a.name)}">
+        <span class="nm"><b>${esc(a.name)}${a.external ? ` <span class="bd">นอก</span>` : ""}</b><small>${a.hasPlan ? (a.hasWeek ? `สัปดาห์ที่ ${a.weekNumber}/${a.weeks}${a.phase ? ` (${esc(a.phase)})` : ""}` : "สัปดาห์นี้ยังไม่มีตาราง") : "ยังไม่มีแผน"}</small></span>
+        <span class="dot7" role="img" aria-label="${a.days.map((s, i) => DAYS[i] + " " + DSTATE[s]).join(", ")}">${a.days.map((s, i) => `<i class="dd ${s}" title="${DAYS_FULL[i]} ${shortDate(addDays(d.week, i))}: ${DSTATE[s]}"></i>`).join("")}</span>
+        <span>${a.hasWeek ? `${a.doneN}/${a.n}` : "–"}</span><span>${a.hasWeek ? `${+a.doneKm.toFixed(0)}/${+a.planKm.toFixed(0)}` : "–"}</span>
+        <span class="heat" role="img" aria-label="ทำตามแผน 8 สัปดาห์ล่าสุด">${a.history.map((h) => { const p = h.n ? (h.done / h.n) * 100 : -1; return `<i class="hs ${p < 0 ? "" : p < 50 ? "h0" : p < 80 ? "h1" : "h2"}" title="${rangeLabel(h.week)}: ${h.n ? `${h.done}/${h.n} ครั้ง` : "ไม่มีตาราง"}"></i>`; }).join("")}</span>
+        <span class="seen${away(a) ? " warn" : ""}">${seenTx(a)}</span></button>`).join("")}</div>
+    <p class="legend">จุดรายวัน: ส้ม = ทำแล้ว, แดง = ค้าง, ขาว = วันนี้, โปร่ง = ยังไม่ถึง, เส้นประ = พัก/ไม่มีตาราง · แท่ง 8 สัปดาห์: เขียว 80% ขึ้นไป, เหลือง 50–79%, แดงต่ำกว่า 50%, เทา = ไม่มีตาราง</p>
+    <h2>ความรู้สึกล่าสุดจากนักกีฬา</h2>
+    ${d.feed.length ? d.feed.map((f) => `<div class="feed"><div class="meta">${esc(f.athlete)}, ${esc(f.workout)}, ${shortDate(f.date)}</div>${esc(fbText(f)) || "ไม่ได้ให้คะแนน"}${f.note ? ` <q>${esc(f.note)}</q>` : ""}</div>`).join("") : `<p class="notice">ยังไม่มีใครบันทึกความรู้สึกหลังซ้อม</p>`}`;
+}
+/* ---------- แท็บนักกีฬานอก: คนที่สมัครเองผ่านปุ่ม “สร้างบัญชี” ในหน้าเข้าสู่ระบบ (ใช้ข้อมูลชุดเดียวกับภาพรวม แต่กรองเฉพาะกลุ่มนี้) ---------- */
+async function loadExt() {
+  const panel = $("#panel"); panel.innerHTML = `<p class="prog">กำลังโหลด…</p>`;
+  let d; try { d = await api("dashboard"); } catch (e) { panel.innerHTML = ""; return toast(e.message, 1); }
+  const A = (d?.athletes || []).filter((a) => a.external);
+  if (!A.length) { panel.innerHTML = `<p class="notice">ยังไม่มีนักกีฬานอกสมัครเข้ามา คนที่กด “สร้างบัญชี” ในหน้าแรกของแอปแล้วสมัครจะมาอยู่ที่นี่</p>`; return; }
+  const away = (a) => a.hasPlan && (a.daysSince === null || a.daysSince >= 3);
+  const due = A.reduce((s, a) => s + a.dueN, 0), dueDone = A.reduce((s, a) => s + a.dueDone, 0), pct = due ? Math.round((dueDone / due) * 100) : 0;
+  const newN = A.filter((a) => a.ext?.createdAt && Date.now() - Date.parse(a.ext.createdAt) < 7 * 864e5).length;
+  const seenTx = (a) => (a.daysSince === null ? "ยังไม่เคยเข้า" : a.daysSince === 0 ? "วันนี้" : `${a.daysSince} วันก่อน`);
+  const DSTATE = { done: "ทำแล้ว", missed: "ค้าง", today: "วันนี้", planned: "ยังไม่ถึง", rest: "พัก", none: "ไม่มีตาราง" };
+  const ids = new Set(A.map((a) => a.id)), feed = d.feed.filter((f) => ids.has(f.athleteId));
+  panel.innerHTML = `<div class="tiles">
+      <div class="tile"><b>${A.length}</b><span>นักกีฬานอกทั้งหมด</span></div>
+      <div class="tile ${newN ? "good" : ""}"><b>${newN}</b><span>สมัครใหม่ใน 7 วัน</span></div>
+      <div class="tile ${!due ? "" : pct >= 80 ? "good" : pct >= 50 ? "warn" : "bad"}"><b>${due ? pct + "%" : "–"}</b><span>ทำตามแผนสัปดาห์นี้ (ถึงวันนี้ ${dueDone}/${due} ครั้ง)</span></div>
+      <div class="tile ${A.some(away) ? "warn" : ""}"><b>${A.filter(away).length}</b><span>ไม่ได้เข้าแอป 3 วันขึ้นไป</span></div></div>
+    <p class="prog">เป้าหมายตายตัวของทุกคน: Buriram Marathon 2027 · ฮาล์ฟมาราธอน 21.1 กม. · 23 ม.ค. 2027 (แก้บัญชี เพซ หรือแผนของแต่ละคนได้ที่แท็บ “นักกีฬา” และ “แผนซ้อม” เหมือนนักกีฬาปกติ)</p>
+    <h2>รายชื่อ (สัปดาห์ ${rangeLabel(d.week)})</h2>
+    <div class="dtable" role="table" aria-label="นักกีฬานอก">
+      <div class="dhead" role="row"><span>นักกีฬา</span><span>สัปดาห์นี้</span><span>ทำแล้ว</span><span>กม.</span><span>8 สัปดาห์ล่าสุด</span><span>เข้าล่าสุด</span></div>
+      ${[...A].sort((p, q) => (q.ext?.createdAt || "").localeCompare(p.ext?.createdAt || "")).map((a) => `<button class="drow" role="row" onclick="goPlan('${a.id}')" aria-label="เปิดปฏิทินแผนของ ${esc(a.name)}">
+        <span class="nm"><b>${esc(a.name)}</b><small>PB 5K ${esc(a.ext.pb5k)} · ฮาล์ฟคาดการณ์ ${esc(a.ext.predictedHalf)} (${esc(a.ext.predictedPace)}/กม.)<br>${esc(a.ext.planLabel)} · ${a.hasPlan ? (a.hasWeek ? `สัปดาห์ที่ ${a.weekNumber}/${a.weeks}` : "สัปดาห์นี้ยังไม่มีตาราง") : "ยังไม่มีแผน"} · สมัคร ${a.ext.createdAt ? shortDate(a.ext.createdAt.slice(0, 10)) : "–"}</small></span>
+        <span class="dot7" role="img" aria-label="${a.days.map((s, i) => DAYS[i] + " " + DSTATE[s]).join(", ")}">${a.days.map((s, i) => `<i class="dd ${s}" title="${DAYS_FULL[i]} ${shortDate(addDays(d.week, i))}: ${DSTATE[s]}"></i>`).join("")}</span>
+        <span>${a.hasWeek ? `${a.doneN}/${a.n}` : "–"}</span><span>${a.hasWeek ? `${+a.doneKm.toFixed(0)}/${+a.planKm.toFixed(0)}` : "–"}</span>
+        <span class="heat" role="img" aria-label="ทำตามแผน 8 สัปดาห์ล่าสุด">${a.history.map((h) => { const p = h.n ? (h.done / h.n) * 100 : -1; return `<i class="hs ${p < 0 ? "" : p < 50 ? "h0" : p < 80 ? "h1" : "h2"}" title="${rangeLabel(h.week)}: ${h.n ? `${h.done}/${h.n} ครั้ง` : "ไม่มีตาราง"}"></i>`; }).join("")}</span>
+        <span class="seen${away(a) ? " warn" : ""}">${seenTx(a)}</span></button>`).join("")}</div>
+    <h2>ความรู้สึกล่าสุดจากนักกีฬานอก</h2>
+    ${feed.length ? feed.map((f) => `<div class="feed"><div class="meta">${esc(f.athlete)}, ${esc(f.workout)}, ${shortDate(f.date)}</div>${esc(fbText(f)) || "ไม่ได้ให้คะแนน"}${f.note ? ` <q>${esc(f.note)}</q>` : ""}</div>`).join("") : `<p class="notice">ยังไม่มีนักกีฬานอกบันทึกความรู้สึกหลังซ้อม</p>`}`;
+}
+function goPlan(id) { cur = id; week = mondayOf(todayStr()); plan = null; tab = "plan"; renderMain(); }
+
+/* ---------- ตัวช่วยคำนวณเพซจากเวลาแข่ง ---------- */
+function calcPaces(id) {
+  const r = Vdot.suggest($(`#cd-${id}`).value, $(`#ct-${id}`).value), out = $(`#cr-${id}`);
+  if (r.error) { out.textContent = r.error; out.style.color = "var(--danger)"; return; }
+  const filled = PACES.some((p) => $(`#pc-${p.k}-${id}`).value.trim());
+  if (filled && !confirm("ช่องเพซที่กรอกไว้จะถูกแทนที่ด้วยค่าที่คำนวณ ดำเนินการต่อไหม?")) return;
+  PACES.forEach((p) => ($(`#pc-${p.k}-${id}`).value = r.values[p.k]));
+  out.style.color = ""; out.textContent = `VDOT ${r.vdot.toFixed(1)} เติมให้ทุกช่องแล้ว เป็นค่าประมาณ ปรับตามนักกีฬาได้ แล้วกด "บันทึกเพซ"`;
+}
+
+/* ---------- ท่าสเตรงท์ ---------- */
+const EXLIB = ["สควอทขาเดียว", "RDL ขาเดียว", "ลันจ์เดินหน้า", "สเต็ปอัพ", "ยกส้นเท้า", "กลูทบริดจ์", "แพลงก์", "แพลงก์ข้าง", "เบิร์ดด็อก", "เดดบั๊ก"];
+const EX_TPL = () => [
+  { n: "สควอทขาเดียว", s: 3, r: "8/ข้าง", w: "น้ำหนักตัว" }, { n: "RDL ขาเดียว", s: 3, r: "8/ข้าง", w: "" },
+  { n: "ยกส้นเท้า", s: 3, r: "15", w: "" }, { n: "กลูทบริดจ์", s: 3, r: "12", w: "" }, { n: "แพลงก์", s: 3, r: "30 วินาที", w: "" },
+];
+function exHtml(w, i, j) {
+  const list = w.exercises || [];
+  return `<div class="bld"><div class="tpl"><span class="l2">เพิ่มท่า:</span>${EXLIB.map((n, k) => `<button class="btn sm" onclick="addEx(${i},${j},${k})">${n}</button>`).join("")}<button class="btn sm" onclick="addEx(${i},${j},-1)">+ ท่าอื่น</button>
+      <button class="btn sm" onclick="exTpl(${i},${j})">แบบพื้นฐานสำหรับนักวิ่ง (5 ท่า)</button></div>
+    ${list.map((e, k) => `<div class="sb"><div class="r"><input aria-label="ชื่อท่า" placeholder="ชื่อท่า" value="${esc(e.n)}" oninput="setEx(${i},${j},${k},'n',this.value)">
+        <input class="xs" type="number" min="0" max="20" inputmode="numeric" aria-label="จำนวนเซต" placeholder="เซต" value="${e.s || ""}" oninput="setEx(${i},${j},${k},'s',this.value)">
+        <input class="xs" aria-label="จำนวนครั้งหรือเวลา" placeholder="10 / 30 วิ" maxlength="16" value="${esc(e.r)}" oninput="setEx(${i},${j},${k},'r',this.value)">
+        <button class="btn sm danger sm2" onclick="delEx(${i},${j},${k})" aria-label="ลบท่า">ลบ</button></div>
+      <div class="r"><input aria-label="น้ำหนักหรือหมายเหตุ" placeholder="น้ำหนัก / หมายเหตุ เช่น น้ำหนักตัว, 10 กก." maxlength="60" value="${esc(e.w)}" oninput="setEx(${i},${j},${k},'w',this.value)"></div></div>`).join("")}
+    ${list.length ? "" : `<p class="prog">ยังไม่มีท่า กดปุ่มด้านบนเพื่อเพิ่ม (ถ้าไม่ใส่ท่า จะใช้ช่องหมายเหตุแทนได้)</p>`}</div>`;
+}
+function addEx(i, j, k) {
+  const w = draft.days[i].workouts[j]; (w.exercises ||= []).push({ n: k >= 0 ? EXLIB[k] : "", s: 3, r: "10", w: "" });
+  dirty = true; drawEditors();
+}
+function setEx(i, j, k, f, v) { const e = draft.days[i].workouts[j].exercises[k]; e[f] = f === "s" ? Math.max(0, Math.min(20, Math.round(+v) || 0)) : v; dirty = true; }
+function delEx(i, j, k) { const w = draft.days[i].workouts[j]; w.exercises.splice(k, 1); if (!w.exercises.length) delete w.exercises; dirty = true; drawEditors(); }
+function exTpl(i, j) {
+  const w = draft.days[i].workouts[j];
+  if (w.exercises?.length && !confirm("แทนที่รายการท่าที่กรอกไว้ด้วยแบบพื้นฐาน?")) return;
+  w.exercises = EX_TPL(); if (!w.name) w.name = "สเตรงท์สำหรับนักวิ่ง"; dirty = true; drawEditors();
+}
+
+/* ---------- ตัวสร้างเวิร์คเอาต์ (วอร์มอัพ / อินเทอร์วัล / คูลดาวน์) ---------- */
+const S1 = (t, u, x, p) => ({ t, u, x, p });
+const RP = (n, wu, wx, wp, ru, rx, rpc) => ({ t: "repeat", n, work: { u: wu, x: wx, p: wp }, rest: { u: ru, x: rx, p: rpc } });
+const TPL = [
+  { id: "easy", label: "วิ่งเบา", name: "Easy run", steps: () => [S1("steady", "km", 8, "lt1")] },
+  { id: "long", label: "วิ่งยาว", name: "Long run", steps: () => [S1("steady", "km", 18, "lt1")] },
+  { id: "tempo", label: "เทมโป", name: "Tempo 20 นาที", steps: () => [S1("warmup", "km", 3, "e"), S1("steady", "min", 20, "lt2"), S1("cooldown", "km", 2, "e")] },
+  { id: "sub", label: "Sub-threshold 4×6 นาที", name: "Sub-threshold 4×6 นาที", steps: () => [S1("warmup", "km", 3, "e"), RP(4, "min", 6, "lt2", "min", 1, "e"), S1("cooldown", "km", 2.5, "e")] },
+  { id: "iv800", label: "อินเทอร์วัล 6×800 ม.", name: "Intervals 6×800 ม.", steps: () => [S1("warmup", "km", 3, "e"), RP(6, "m", 800, "k5", "m", 400, "e"), S1("cooldown", "km", 2, "e")] },
+  { id: "vo2", label: "VO2Max 5×3 นาที", name: "VO2Max 5×3 นาที", steps: () => [S1("warmup", "km", 3, "e"), RP(5, "min", 3, "vo2max", "min", 3, "e"), S1("cooldown", "km", 2, "e")] },
+];
+const athPaces = () => athletes.find((x) => x.id === cur)?.paces || null;
+const stepOf = (w, k, sub) => (sub ? w.steps[k][sub] : w.steps[k]);
+const UNIT_OPT = [["km", "กม."], ["m", "ม."], ["min", "นาที"], ["s", "วินาที"]];
+const A = (i, j, k, sub) => `${i},${j},${k},'${sub}'`;
+
+function paceSelHtml(p, i, j, k, sub) {
+  const paces = athPaces(), isRef = Steps.REFS.includes(p), val = isRef ? p : p ? "custom" : "";
+  return `<select aria-label="เพซ" onchange="setPace(${A(i, j, k, sub)},this.value)"><option value="">เลือกเพซ…</option>
+    ${PACES.map((o) => `<option value="${o.k}"${val === o.k ? " selected" : ""}>${o.label}${paces?.values?.[o.k] ? " " + esc(paces.values[o.k]) : " (ยังไม่ตั้ง)"}</option>`).join("")}
+    <option value="custom"${val === "custom" ? " selected" : ""}>กำหนดเอง</option></select>
+    ${val === "custom" ? `<input class="xs" placeholder="เช่น 4:20" aria-label="เพซกำหนดเอง นาที/กม." value="${esc(p)}" oninput="setS(${A(i, j, k, sub)},'p',this.value)">` : ""}`;
+}
+const amountHtml = (st, i, j, k, sub) => `<input class="xs" type="number" min="0" step="any" inputmode="decimal" aria-label="ปริมาณ" value="${st.x || ""}" oninput="setS(${A(i, j, k, sub)},'x',this.value)">
+  <select class="xs" aria-label="หน่วย" onchange="setS(${A(i, j, k, sub)},'u',this.value,1)">${UNIT_OPT.map(([u, l]) => `<option value="${u}"${st.u === u ? " selected" : ""}>${l}</option>`).join("")}</select>`;
+
+function stepHtml(it, i, j, k) {
+  const del = `<button class="btn sm danger sm2" onclick="delS(${i},${j},${k})" aria-label="ลบขั้นนี้">ลบ</button>`;
+  if (it.t === "repeat") {
+    const rest = it.rest || (it.rest = { u: "min", x: 0, p: "e" });
+    return `<div class="sb k-repeat"><div class="r"><b class="lab">อินเทอร์วัล</b><input class="xs" type="number" min="1" max="50" aria-label="จำนวนรอบ" value="${it.n}" oninput="setS(${A(i, j, k, "")},'n',this.value)"><span class="lab" style="min-width:0">รอบ</span>${del}</div>
+      <div class="r"><span class="lab">ช่วงเร็ว</span>${amountHtml(it.work, i, j, k, "work")}${paceSelHtml(it.work.p, i, j, k, "work")}</div>
+      <div class="r"><span class="lab">พักระหว่างรอบ</span>${amountHtml(rest, i, j, k, "rest")}${paceSelHtml(rest.p, i, j, k, "rest")}</div></div>`;
+  }
+  return `<div class="sb k-${it.t}"><div class="r"><select class="sm2" aria-label="ชนิดขั้น" onchange="setS(${A(i, j, k, "")},'t',this.value,1)">${["warmup", "steady", "cooldown"].map((t) => `<option value="${t}"${it.t === t ? " selected" : ""}>${Steps.T[t]}</option>`).join("")}</select>
+    ${amountHtml(it, i, j, k, "")}${paceSelHtml(it.p, i, j, k, "")}${del}</div></div>`;
+}
+function previewHtml(w) {
+  const c = Steps.calc(w.steps, athPaces()), a = athletes.find((x) => x.id === cur);
+  return `${stepGraph(c.segs, "ตัวอย่างกราฟโครงสร้างการซ้อม")}
+    <div class="tot">${c.ok ? `เวลารวม ${Steps.clock(c.sec)} · ระยะรวม ${+(c.m / 1000).toFixed(1)} กม. <span class="auto">(คำนวณจากเพซของ ${esc(a?.name || "")})</span>` : `<span class="auto">ยังคำนวณไม่ครบ</span>`}</div>
+    ${!c.ok ? `<div class="warn">${c.missing.length ? `ยังไม่ได้ตั้งเพซ ${c.missing.map((r) => Steps.REF_LABEL[r]).join(", ")} ของ ${esc(a?.name || "นักกีฬา")} ไปตั้งที่แท็บ "นักกีฬา" ก่อน` : "ใส่ปริมาณและเพซให้ครบทุกขั้น"}</div>` : ""}`;
+}
+function builderHtml(w, i, j) {
+  const tplBtns = TPL.map((t) => `<button class="btn sm" onclick="tpl(${i},${j},'${t.id}')">${t.label}</button>`).join("");
+  if (!w.steps?.length) return `<div class="tpl"><span class="l2">สร้างแบบมีโครงสร้าง ใส่เพซแล้วคำนวณเวลาให้:</span>${tplBtns}</div>`;
+  return `<div class="bld"><div class="tpl"><span class="l2">เริ่มใหม่จากแบบ:</span>${tplBtns}</div>
+    ${w.steps.map((it, k) => stepHtml(it, i, j, k)).join("")}
+    <div class="tpl"><button class="btn sm" onclick="addS(${i},${j},'warmup')">+ วอร์มอัพ</button><button class="btn sm" onclick="addS(${i},${j},'steady')">+ วิ่งต่อเนื่อง</button><button class="btn sm" onclick="addS(${i},${j},'repeat')">+ อินเทอร์วัล</button><button class="btn sm" onclick="addS(${i},${j},'cooldown')">+ คูลดาวน์</button></div>
+    <div class="pv" id="pv-${i}-${j}">${previewHtml(w)}</div>
+    <button class="btn sm danger" onclick="clearSteps(${i},${j})">ยกเลิกโครงสร้าง (กรอกเวลา/ระยะเอง)</button></div>`;
+}
+// อัปเดตกราฟ/ยอดรวม และช่องเวลา-ระยะของเวิร์คเอาต์ โดยไม่วาดฟอร์มใหม่ (กันช่องกรอกเสียโฟกัสตอนพิมพ์)
+function updatePv(i, j) {
+  const w = draft.days[i].workouts[j], c = Steps.calc(w.steps, athPaces());
+  if (c.ok) { w.durationMinutes = c.minutes; w.distanceMeters = c.meters; }
+  const pv = $(`#pv-${i}-${j}`); if (pv) pv.innerHTML = previewHtml(w);
+  const dm = $(`#dm-${i}-${j}`), dk = $(`#dk-${i}-${j}`);
+  if (dm) dm.value = w.durationMinutes || ""; if (dk) dk.value = w.distanceMeters ? +(w.distanceMeters / 1000).toFixed(2) : "";
+}
+function setS(i, j, k, sub, f, v, redraw) {
+  const w = draft.days[i].workouts[j], st = stepOf(w, k, sub);
+  st[f] = f === "x" ? Math.max(0, +v || 0) : f === "n" ? Math.max(1, Math.min(50, Math.round(+v) || 1)) : v;
+  dirty = true; redraw ? (updatePv(i, j), drawEditors()) : updatePv(i, j);
+}
+function setPace(i, j, k, sub, v) {
+  const st = stepOf(draft.days[i].workouts[j], k, sub);
+  st.p = v === "custom" ? "5:00" : v; dirty = true; updatePv(i, j); drawEditors();
+}
+function addS(i, j, t) {
+  const w = draft.days[i].workouts[j];
+  w.steps.push(t === "repeat" ? RP(4, "min", 6, "lt2", "min", 1, "e") : S1(t, "km", t === "steady" ? 5 : 2, t === "steady" ? "lt1" : "e"));
+  dirty = true; updatePv(i, j); drawEditors();
+}
+function delS(i, j, k) { const w = draft.days[i].workouts[j]; w.steps.splice(k, 1); if (!w.steps.length) delete w.steps; dirty = true; if (w.steps) updatePv(i, j); drawEditors(); }
+function clearSteps(i, j) { delete draft.days[i].workouts[j].steps; dirty = true; drawEditors(); }
+function tpl(i, j, id) {
+  const t = TPL.find((x) => x.id === id), w = draft.days[i].workouts[j];
+  if (w.steps?.length && !confirm("แทนที่ขั้นตอนที่กรอกไว้ด้วยแบบนี้?")) return;
+  w.steps = t.steps(); if (!w.name) w.name = t.name; dirty = true; updatePv(i, j); drawEditors();
+}
+function addW(i) { const ws = draft.days[i].workouts; ws.push({ id: uid(), sport: "run", name: "", durationMinutes: 0, distanceMeters: 0, humanReadable: "" }); dirty = true; drawCal(); openW(i, ws.length - 1); }
+function delW(i, j) { draft.days[i].workouts.splice(j, 1); dirty = true; openIJ ? closeW() : drawCal(); }
+function setW(i, j, f, v, el) {
+  const w = draft.days[i].workouts[j];
+  if (f === "distanceKm") w.distanceMeters = Math.round((+v || 0) * 1000);
+  else if (f === "durationMinutes") w.durationMinutes = +v || 0;
+  else w[f] = v;
+  dirty = true;
+  if (f === "sport") { el.closest(".ewo").className = "ewo s-" + v; if (v !== "run") delete w.steps; if (v !== "strength") delete w.exercises; drawEditors(); }
+}
+function pickAth(id) { if (!guard()) { renderPlan(); return; } cur = id; plan = null; loadPlan(); }
+function shiftWeek(n) { if (!guard()) return; week = addDays(week, 7 * n); loadDraft(); renderPlan(); }
+async function saveWeek() {
+  try { plan = (await api("saveWeek", { id: cur, week: draft })).plan; loadDraft(); renderPlan(); toast("บันทึกสัปดาห์นี้แล้ว"); }
+  catch (e) { toast(e.message, 1); }
+}
+function copyPrev() {
+  const prev = plan?.weeks.find((w) => w.startDate === addDays(week, -7));
+  if (!prev) return toast("สัปดาห์ก่อนยังไม่มีตาราง", 1);
+  draft.phase = prev.phase; draft.focus = prev.focus;
+  draft.days = prev.days.map((d, i) => ({ date: addDays(week, i), workouts: d.workouts.map((w) => ({ ...JSON.parse(JSON.stringify(w)), id: uid() })) }));
+  dirty = true; renderPlan(); toast("คัดลอกแล้ว กด บันทึก เพื่อใช้งาน");
+}
+async function saveMeta() {
+  try { plan = (await api("savePlanMeta", { id: cur, event: $("#pe").value, eventDate: $("#pd").value })).plan; toast("บันทึกแล้ว"); }
+  catch (e) { toast(e.message, 1); }
+}
+async function delPlan() {
+  if (!confirm("ลบแผนและประวัติการติ๊กทำแล้วของคนนี้ทั้งหมด? ย้อนกลับไม่ได้")) return;
+  try { await api("deletePlan", { id: cur }); plan = null; loadDraft(); renderPlan(); toast("ลบแผนแล้ว"); } catch (e) { toast(e.message, 1); }
+}
+async function importFile(inp) {
+  const f = inp.files[0]; inp.value = ""; if (!f) return;
+  let data;
+  try {
+    const text = await f.text();
+    const m = text.match(/<script[^>]*id=["']plan-data["'][^>]*>([\s\S]*?)<\/script>/);
+    data = JSON.parse(m ? m[1] : text);
+  } catch { return toast("อ่านไฟล์ไม่ได้ ใช้ไฟล์ .html จาก Claude Coach หรือ .json", 1); }
+  if (!Array.isArray(data.weeks) || !data.weeks.length) return toast("ไม่พบข้อมูลสัปดาห์ในไฟล์", 1);
+  if (plan && !confirm("แทนที่แผนเดิมของคนนี้ทั้งหมด? ประวัติติ๊กทำแล้วของเวิร์คเอาต์ที่รหัสตรงกันจะยังอยู่")) return;
+  try {
+    plan = (await api("importPlan", { id: cur, plan: { meta: data.meta, weeks: data.weeks } })).plan;
+    week = plan.weeks.some((w) => w.startDate === mondayOf(todayStr())) ? mondayOf(todayStr()) : plan.weeks[0].startDate;
+    loadDraft(); renderPlan(); toast(`นำเข้าแล้ว ${plan.weeks.length} สัปดาห์`);
+  } catch (e) { toast(e.message, 1); }
+}
+async function sendNow() {
+  if (dirty) return toast("กด บันทึก ก่อนส่ง", 1);
+  const a = athletes.find((x) => x.id === cur);
+  if (!confirm(`ส่งตาราง ${rangeLabel(week)} ให้ ${a.name} ทางอีเมลตอนนี้ ใช่ไหม?`)) return;
+  try { await api("send", { id: cur, week }); toast("ส่งอีเมลแล้ว"); } catch (e) { toast(e.message, 1); }
+}
+
+window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+pw ? boot() : renderLogin();
+</script>
+</body>
+</html>

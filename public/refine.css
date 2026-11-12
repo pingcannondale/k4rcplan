@@ -1,0 +1,27 @@
+/* ===== refine.css — ปรับหน้าตา (พรีวิว) ===== */
+/* 1) จำกัดสีแดง: แดง = ปุ่มหลัก / แท็บที่เลือก / วันนี้ / สัปดาห์ปัจจุบัน */
+.hs-c.done{background:rgb(var(--fg)/.9)!important;color:#202124!important;box-shadow:none!important;border-color:transparent!important}
+.xpg i{background:rgb(var(--fg)/.88)!important}
+.xsg button[aria-pressed="true"]{background:rgb(var(--fg)/.16)!important;color:var(--tx)!important;box-shadow:inset 0 0 0 1px rgb(var(--fg)/.18)!important}
+/* 2) แถบโซนความเหนื่อย: บาง + ชื่อโซนกำกับ */
+.xgr{height:auto;align-items:center;gap:4px;margin-top:2px}
+.xgr i{height:9px!important;border-radius:99px!important}
+.xgc{margin:-4px 0 0;font:500 12.5px/1.3 var(--mono,ui-monospace,monospace);letter-spacing:.01em;color:rgb(var(--fg)/.72)}
+/* 3) ลำดับตัวหนังสือ: ป้ายอ่านง่ายขึ้น ตัวเลขเด่นขึ้น */
+body .xm,body .xlb,body .sx,body .fp-sub,body .xv .hhead .muted,body .xbx span,body .hs-d{color:rgb(var(--fg)/.74)}
+body .xm{font-size:13.5px}body .xlb{font-size:13px;font-weight:600}
+body .sx{font-size:12.5px}
+.fp-n b,.xbx b{font-size:1.7rem;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.fp-n small,.xbx b small{font-size:.8rem;color:rgb(var(--fg)/.7)}
+.xbx span{font-size:13px}
+.xchips .xpl{color:rgb(var(--fg)/.9)}
+/* 4) แถบเมนูลอย: เนื้อหาจางก่อนถึงเมนู */
+body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(var(--sb,0px) + 118px);z-index:49;pointer-events:none;
+  background:linear-gradient(to top,var(--pg) 0%,var(--pg) 28%,rgb(var(--c1rgb,32 33 36)/0) 100%)}
+/* 9) ฟีดทีม: เบาลง กระชับ ชื่อคนเด่นกว่าชื่อเวิร์คเอาต์ */
+.team .fp{padding:14px 16px;margin-bottom:10px;border-radius:22px}
+.team .fp-who b{font-size:16px;font-weight:700}
+.team .fp-t{margin-top:10px;font-size:1.02rem;font-weight:600;color:rgb(var(--fg)/.86)}
+.team .fp-n{gap:22px;margin-top:8px}
+.team .fp-n b{font-size:1.3rem}
+.team .fp-f{margin-top:8px}

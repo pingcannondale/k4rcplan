@@ -1,0 +1,17 @@
+name = "k4rcplan"
+pages_build_output_dir = "public"
+
+# จำเป็น: โค้ดใช้ node:crypto (scryptSync, timingSafeEqual, createHmac, randomUUID)
+# และอ่าน env var ผ่าน process.env — ธงนี้เปิดให้ Cloudflare รองรับทั้งสองอย่าง
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-09-23"
+
+# ตั้งค่า backend ให้ใช้ Cloudflare KV (ไม่ใช้ Supabase/Netlify Blobs แล้ว)
+[vars]
+K4RC_DATA_BACKEND = "cloudflare-kv"
+
+# ผูก KV namespace: สร้างด้วย `wrangler kv namespace create K4RC_KV` ก่อน
+# แล้วเอา id ที่ได้มาใส่แทน YOUR_KV_NAMESPACE_ID ด้านล่าง
+[[kv_namespaces]]
+binding = "K4RC_KV"
+id = "ecb88bda273a463bbc0350182f05895a"
